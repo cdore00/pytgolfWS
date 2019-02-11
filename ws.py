@@ -50,10 +50,13 @@ from bson.json_util import dumps
 from bson.json_util import loads
 import json
 
+""" Golf functions """
 import golfFunc as gf
 gf.data = data
 
+
 def exception_handler(status, message, traceback, version):
+	""" EXCEPTION """
 	#pdb.set_trace()
 	logInfo = "ERROR " + status + " : " + message + " : Command: " +  cherrypy.request.path_info + "?" + cherrypy.request.query_string
 	print(traceback)
@@ -104,6 +107,11 @@ class webServer(object):
         return gf.getClubParc(param, self)
 
     @cherrypy.expose
+    def getClubParcTrous(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.getClubParcTrous(param, self)
+		
+    @cherrypy.expose
     def getBloc(self, info = False):
         param = parse_qs(urlparse('url?' + info).query)
         return gf.getBloc(param, self)
@@ -132,7 +140,20 @@ class webServer(object):
     def showLog(self, nam = ''):
         return gf.showLog(nam)		
 		
-		
+    @cherrypy.expose
+    def addUserIdent(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.addUserIdent(param, self)
+
+    @cherrypy.expose
+    def confInsc(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.confInsc(param, self)
+
+    @cherrypy.expose
+    def getPass(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.getPass(param, self)		
 		
 		
 # Start server listening request
@@ -149,7 +170,6 @@ def run( port = 8080, domain = '0.0.0.0'):
    cherrypy.quickstart(webServer())	
 
         
-		
 def build_arg_dict(arg):
 	argd = dict()
 	def add_dict(item):

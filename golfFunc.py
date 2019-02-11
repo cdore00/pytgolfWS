@@ -95,7 +95,7 @@ def addUserIdent(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 		
 def confInsc(param, self):
 	""" To Confirm new account"""
@@ -116,7 +116,7 @@ def confInsc(param, self):
 		else:	
 			return("Confirm" + str(param))		
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 		
 def getPass(param, self):
 	""" Recover password by email """
@@ -133,7 +133,7 @@ def getPass(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 
 def getPassForm(self):
 	""" Return HTML code form to change password """
@@ -216,7 +216,7 @@ def authUser(param, self, cookie):
 		else:
 			return dumps({'resp': {"result": 0} })	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 		
 def saveUser(param, self):
 	""" To modify user account info"""
@@ -260,7 +260,7 @@ def saveUser(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))	
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))	
 
 def getUserInfo(param, self):
 	""" Get user account info by administrator"""
@@ -283,7 +283,7 @@ def getUserInfo(param, self):
 		else: 
 			return ('{"n":0,"ok":0, "message": "S0062"}')	
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 		
 def updateUser(param, self):
 	""" To modify user account info by administrator"""
@@ -308,7 +308,7 @@ def updateUser(param, self):
 		else: 
 			return ('{"n":0,"ok":0, "message": "S0062"}')
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))			
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))			
 		
 		
 def savePassword(param, self):
@@ -337,7 +337,7 @@ def savePassword(param, self):
 		else: 
 			return ('{"n":0,"ok":0, "message": "S0062"}')
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))				
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))				
 
 
 def getRegionList():
@@ -357,7 +357,7 @@ def getParcInfo(param, self):
 		else:
 			return dumps({'ok': 0})	# No param	
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))			
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))			
 	
 def searchResult(param, self):
 
@@ -393,7 +393,7 @@ def searchResult(param, self):
 		res = dumps(docs)
 		return res
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 
 def getFav(param, self):
 	try:
@@ -415,7 +415,7 @@ def getFav(param, self):
 		else:
 			return dumps({'ok': 0})	# No param		
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 		
 def updateFav(param, self):
 	""" Add club to user favorite list"""
@@ -442,7 +442,7 @@ def updateFav(param, self):
 		else:
 			return dumps({'ok': 0})	# No param	
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 		
 			
 def getClubList(param, self):
@@ -479,7 +479,7 @@ def getClubData(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + str(sys.exc_info()[1]))		
+		log_Info( " ERROR: " + str(sys.exc_info()[1]))		
 		
 def getClubParc(param, self):
 	""" To get club and his courses info"""
@@ -514,7 +514,7 @@ def getClubParc(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + str(sys.exc_info()[1]))
 		
 def getBloc(param, self):
 	try:	
@@ -528,10 +528,11 @@ def getBloc(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))	
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))	
 		
 def getClubParcTrous(param, self):
 	try:
+		
 		if param.get("data"):
 			param = param["data"][0]
 			ids = [int(x) for x in param.split("$")]
@@ -543,7 +544,7 @@ def getClubParcTrous(param, self):
 
 			if doc.count() > 0:
 				coll = data.golfGPS
-				docs = coll.find({"Parcours_id": courseID }).sort([['Parcours_id', pymongo.ASCENDING], ['trou', pymongo.ASCENDING]])
+				docs = coll.find({"Parcours_id": courseID }).sort([['Parcours_id', 1], ['trou', 1]])
 				if docs.count() > 0:
 					dic = cursorTOdict(doc)
 					res = [dic]				
@@ -555,7 +556,7 @@ def getClubParcTrous(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 
 def setGolfGPS(param, self):
 	try:
@@ -593,7 +594,7 @@ def setGolfGPS(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 		
 def countUserGame(param, self):
 	try:
@@ -621,7 +622,7 @@ def countUserGame(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))		
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))		
 
 		
 def getGameList(param, self):
@@ -696,7 +697,7 @@ def getGameList(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 		
 def getGameTab(param, self):
 	try:
@@ -723,7 +724,7 @@ def getGameTab(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))		
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))		
 
 def endDelGame(param, self):
 	try:
@@ -751,7 +752,7 @@ def endDelGame(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 		
 def updateGame(param, self):
 	try:
@@ -813,7 +814,7 @@ def updateGame(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 		
 def getGolfGPS(param, self):
 	try:
@@ -835,7 +836,7 @@ def getGolfGPS(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 		
 def getGame(param, self, userID = False, parcID = False):
 	try:
@@ -859,7 +860,7 @@ def getGame(param, self, userID = False, parcID = False):
 		else:
 			return getG(userID, parcID)
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 
 def saveClub(param, self):
 	""" Save Club, courses and blocs data """
@@ -990,7 +991,7 @@ def saveClub(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 
 def getCourseColl(clubID):
 	collP = data.parcours
@@ -1029,7 +1030,7 @@ def delClub(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 
 def setPosition(param, self):
 	try:
@@ -1055,7 +1056,7 @@ def setPosition(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 		
 def getPosition(param, self):
 	try:
@@ -1081,7 +1082,7 @@ def getPosition(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info(self.path + " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 		
 # Manage logs
 
