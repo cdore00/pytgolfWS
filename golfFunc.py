@@ -25,6 +25,8 @@ if not os.path.exists(LOG_DIR):
 LOG_FILE = LOG_DIR + '/' + str(int(millis())) + '.log'
 print("logfile= " + LOG_FILE)
 
+localHost = False
+cookie = ""
 
 def getID(strID):
 	if len(strID) < 5:
@@ -40,14 +42,13 @@ def cursorTOdict(doc):
 def checkSession(self, role = None):
 	""" Session ID check for user"""
 	#pdb.set_trace()
-	strCook =  self.headers["Cookie"]
-	print('1-Cookies = ' + str(strCook))
-	if strCook and 'sessID' in strCook and 'userID' in strCook:
-		cookie.load(strCook)
+
+	#print('1-Cookies = ' + str(cookie))
+	if cookie and 'sessID' in cookie and 'userID' in cookie:
 		sID = cookie['sessID'].value
 		uID = getID(cookie['userID'].value)
-		coll = data.users
-		print('2-Role = ' + str(role))
+		coll = dataBase.users
+		#print('2-Role = ' + str(role))
 		if role is None:
 			doc = coll.find({"_id": uID, "sessID": sID}, ["_id"])
 		else:
@@ -69,7 +70,7 @@ def addUserIdent(param, self):
 			if param.get("user"):
 				user = param["user"][0]
 
-			coll = data.users
+			coll = dataBase.users
 			docs = coll.find({"courriel": email})
 			#pdb.set_trace()
 			if docs.count() > 0:
@@ -102,7 +103,7 @@ def confInsc(param, self):
 	try:
 		if param.get("data"):
 			user = param["data"][0]
-			coll = data.users
+			coll = dataBase.users
 			docs = coll.find({"courriel": user})
 			if docs[0]['actif'] == True:
 				return ("<h1>Le compte " + docs[0]['courriel'] + " est d&eacute;j&agrave; actif.</h1>")
@@ -123,7 +124,7 @@ def getPass(param, self):
 	try:
 		if param.get("data"):
 			email = param["data"][0]
-			coll = data.users
+			coll = dataBase.users
 			docs = coll.find({"courriel": email, "actif": True})
 			if docs.count() > 0:
 				sendRecupPassMail(docs[0]['courriel'], docs[0]['Nom'], docs[0]['motpass'])
@@ -138,36 +139,10 @@ def getPass(param, self):
 def getPassForm(self):
 	""" Return HTML code form to change password """
 	htmlContent = '<div id="accountForm"><div id="titrePref">Edit account</div><form id="formPass"></br> <div class="prefList"><label for="passUser" class="identLbl">New password</label><div class="prefVal"><input id="passUser" type="text" size="15" maxlength="20"/></div></div> <div><input id="okPref" class="bouton" type="submit" onClick="savePass(); return false;" value="Ok" /><input id="annulePref" class="bouton" type="button" onClick="closePref(); return false;"  value="Cancel"/></div></form></div>'
-	writeCook(self,htmlContent)
-	return False	
-		
-def writeCook(self, mess, sessID=False, userID=False):
-	""" Write cookies and end session (caller function must return False) """
-	pdb.set_trace()
-	"""self.send_response(200)
-	self.send_header('Content-type','text/html')
-	if self.localClient:
-		self.send_header('Access-Control-Allow-Origin', '*')
-	else:
-		self.send_header('Access-Control-Allow-Origin', HOSTcors)
-		self.send_header('Access-Control-Allow-Credentials', 'true')
-		self.send_header("Access-Control-Allow-Headers", "Origin, Content-Type, Cookie")
-		cook =  self.headers["Cookie"]
-		#print('Cookies Allow authUser N= ' + str(cook))
-	"""	
-		#  Set cookie
+	#writeCook(self,htmlContent)
+	return htmlContent	
+
 	
-	if sessID:
-		cookInfo = 'sessID=' + sessID + ';max-age=31536000'
-		self.send_header('Set-Cookie', cookInfo)
-	if userID:
-		cookInfo = 'userID=' + userID + ';max-age=31536000'
-		self.send_header('Set-Cookie', cookInfo)
-	#self.end_headers()
-	# Write content as utf-8 data
-	#self.wfile.write(bytes(mess, "utf8"))
-	return
-		
 def authUser(param, self, cookie):
 	""" To Authenticate or return user info to modify """
 	try:	
@@ -176,7 +151,7 @@ def authUser(param, self, cookie):
 			if not isinstance(param, (list)) and param.get("user"):
 				user = param["user"][0]
 				#print("1- user= " + str(user))
-				coll = data.users
+				coll = dataBase.users
 				doc = coll.find({"courriel": user, "actif": True}, ["_id","Nom", "courriel", "motpass", "niveau"])
 				
 				def setSessID(mess, userID):
@@ -227,7 +202,7 @@ def saveUser(param, self):
 			id = param["id"][0]
 			name = param["name"][0]
 
-			coll = data.users
+			coll = dataBase.users
 			
 			def updUser(doc):
 				if str(doc['motpass']) == passw:
@@ -265,8 +240,8 @@ def saveUser(param, self):
 def getUserInfo(param, self):
 	""" Get user account info by administrator"""
 	try:
-		if self.localClient or checkSession(self, role = ['ADM']):
-			coll = data.users
+		if localHost or checkSession(self, role = ['ADM']):
+			coll = dataBase.users
 			if param.get("id"):
 				o_id = getID(param["id"][0])
 				doc = coll.find({"_id": o_id}, ["_id", "Nom", "courriel", "niveau", "actif", "note"])
@@ -288,7 +263,7 @@ def getUserInfo(param, self):
 def updateUser(param, self):
 	""" To modify user account info by administrator"""
 	try:
-		if self.localClient or checkSession(self, role = ['ADM']):
+		if localHost or checkSession(self, role = ['ADM']):
 			if param.get("id"):
 				o_id = getID(param["id"][0])
 				user = param["user"][0]
@@ -300,7 +275,7 @@ def updateUser(param, self):
 				active = param["active"][0]
 				active = True if active == '1' else False
 				
-				coll = data.users
+				coll = dataBase.users
 				docr = coll.update({"_id": o_id}, { "$set": {'Nom': name, 'courriel': user, "niveau": role, "actif": active } })
 				return dumps(docr)
 			else:
@@ -314,18 +289,14 @@ def updateUser(param, self):
 def savePassword(param, self):
 	""" To modify password account by administrator"""
 	try:
-		if self.localClient or checkSession(self, role = ['ADM']):
+
+		if localHost or checkSession(self, role = ['ADM']):
 			if param.get("id") and param.get("pass"):
 				
 				o_id = getID(param["id"][0])
 				passw = param["pass"][0]
-				
-				"""strCook =  self.headers["Cookie"]
-				if not strCook is None:
-					cookie.load(strCook)
-					admMail = cookie['userMail'].value
-				"""
-				coll = data.users
+								
+				coll = dataBase.users
 				docr = coll.update({"_id": o_id}, { "$set": {'motpass': passw } })
 				if param.get("user_mail"):
 					email = param["user_mail"][0]
@@ -341,7 +312,7 @@ def savePassword(param, self):
 
 
 def getRegionList():
-	col = data.regions
+	col = dataBase.regions
 	docs = col.find({})
 	res = dumps(docs)
 	return res
@@ -351,7 +322,7 @@ def getParcInfo(param, self):
 	try:
 		if param.get("data"):
 			parcID = getID(param["data"][0])
-			coll = data.parcours
+			coll = dataBase.parcours
 			docs = coll.find({"_id": parcID})
 			return dumps(docs)
 		else:
@@ -372,7 +343,7 @@ def searchResult(param, self):
 			lng = float(param["qlt"][0])
 			lat = float(param["qln"][0])
 		qT = []
-		col = data.club
+		col = dataBase.club
 		
 		if 'qNom' in locals():
 			regxN = re.compile(qNom, re.IGNORECASE)
@@ -399,11 +370,11 @@ def getFav(param, self):
 	try:
 		if param.get("data"):
 			userID = getID(param["data"][0])
-			coll = data.userFavoris
+			coll = dataBase.userFavoris
 			docs = coll.find({"USER_ID": userID}, ["CLUB_ID"])
 			
 			def getClubNameList(clubList):
-				coll = data.club
+				coll = dataBase.club
 				favDocs = coll.find({"_id":{"$in": clubList }},["_id","nom"]).sort("nom")
 				return dumps(favDocs)
 			
@@ -427,7 +398,7 @@ def updateFav(param, self):
 			userID = getID(ids[1])
 			action = int(ids[2])
 
-			coll = data.userFavoris
+			coll = dataBase.userFavoris
 
 			if action == 1:
 				docs = coll.insert_one({"CLUB_ID": clubID , "USER_ID": userID})
@@ -451,7 +422,7 @@ def getClubList(param, self):
 		clubList = param["data"][0]
 		ids = [int(x) for x in clubList.split(",")]
 
-		coll = data.club
+		coll = dataBase.club
 		docs = coll.find({"_id": {"$in": ids }}, {"_id": 1,"nom": 1, "adresse": 1, "municipal": 1, "telephone": 1, "telephone2": 1, "telephone3": 1, "location": 1, "courses.TROUS": 1}).sort("nom")
 		
 		return dumps(docs)
@@ -498,7 +469,7 @@ def getClubParc(param, self):
 			
 			def isFavorite(doc):
 				if userID is not None and len(str(userID)) > 0:
-					coll = data.userFavoris
+					coll = dataBase.userFavoris
 					favDoc = coll.find({"CLUB_ID": clubID , "USER_ID": userID}, ["CLUB_ID"])
 					if favDoc.count() > 0:
 						doc['isFavorite'] = True
@@ -506,7 +477,7 @@ def getClubParc(param, self):
 						doc['isFavorite'] = False
 				return doc
 				
-			coll = data.club
+			coll = dataBase.club
 			docs = coll.find({"_id": clubID })
 			dic = cursorTOdict(docs)
 
@@ -522,7 +493,7 @@ def getBloc(param, self):
 			
 			blocList = param["data"][0]
 			ids = [int(x) for x in blocList.split("$")]
-			coll = data.blocs 
+			coll = dataBase.blocs 
 			docs = coll.find({"PARCOURS_ID":{"$in": ids }}).sort("PARCOURS_ID")
 			return dumps(docs)
 		else:
@@ -539,11 +510,11 @@ def getClubParcTrous(param, self):
 			clubID = ids[0]
 			courseID = ids[1]
 
-			coll = data.club
+			coll = dataBase.club
 			doc = coll.find({"_id": clubID }, ["_id","nom", "courses", "latitude", "longitude"])
 
 			if doc.count() > 0:
-				coll = data.golfGPS
+				coll = dataBase.golfGPS
 				docs = coll.find({"Parcours_id": courseID }).sort([['Parcours_id', 1], ['trou', 1]])
 				if docs.count() > 0:
 					dic = cursorTOdict(doc)
@@ -561,6 +532,7 @@ def getClubParcTrous(param, self):
 def setGolfGPS(param, self):
 	try:
 		if param.get("data"):
+			
 			param = param["data"][0]
 			para = [x for x in param.split("$")]
 			courseId = int(para[0])
@@ -570,8 +542,8 @@ def setGolfGPS(param, self):
 			toInit = int(para[4])
 			clubId = int(para[5])
 			
-			coll = data.golfGPS
-			if self.localClient or checkSession(self, role = ['ADM','MEA']):
+			coll = dataBase.golfGPS
+			if localHost or checkSession(self, role = ['ADM','MEA']):
 				if toInit == 0:
 					docr = coll.update({ 'Parcours_id': courseId, 'trou': trou }, { '$set': {'Parcours_id': courseId, 'trou': trou, 'latitude': lat, 'longitude': lng } },  upsert=True )
 					return dumps(docr)
@@ -581,12 +553,12 @@ def setGolfGPS(param, self):
 						resp = coll.update({ 'Parcours_id': courseId, 'trou': holeNo }, { '$set': {'Parcours_id': courseId, 'trou': holeNo, 'latitude': lat, 'longitude': lng } },  upsert=True)
 						if holeNo == toInit:
 							#pdb.set_trace()
-							coll = data.parcours
+							coll = dataBase.parcours
 							pRep = coll.update({"_id":courseId}, {"$set":{"GPS": True }})
 							pa = coll.find({'CLUB_ID': clubId})
 							strCur = dumps(pa)
 							cur = loads(strCur)
-							coll = data.club
+							coll = dataBase.club
 							res = coll.update({'_id': clubId}, {'$set':{"courses": cur }})
 							return dumps(res)
 			else: 
@@ -606,7 +578,7 @@ def countUserGame(param, self):
 			#pdb.set_trace()
 			withGroup = True if len(para) > 2 else False
 			
-			coll = data.score
+			coll = dataBase.score
 			if (is18 == 18):
 				count = coll.find({"USER_ID": user, "T18": { "$exists": True, "$nin": [ 0 ] }}).count()
 				if withGroup == True:
@@ -647,7 +619,7 @@ def getGameList(param, self):
 				intDate = 9999999999999
 
 			cur = []
-			coll = data.score
+			coll = dataBase.score
 			
 			def addCur(doc):
 				
@@ -706,14 +678,14 @@ def getGameTab(param, self):
 			gID = getID(param["data"][0])
 
 			def getBloc(doc):
-				coll = data.blocs
+				coll = dataBase.blocs
 				blocs = coll.find({"PARCOURS_ID": doc['PARCOURS_ID'] })
 				for x in blocs:
 					if x['Bloc'] == "Normale":
 						doc['par'] = x
 				return dumps([doc]) 
 			
-			coll = data.score
+			coll = dataBase.score
 			doc = coll.find({"_id":gID})
 			if doc.count() > 0:
 				doc = cursorTOdict(doc)
@@ -736,7 +708,7 @@ def endDelGame(param, self):
 			action = int(para[1])
 			resErr = '{"n":0,"ok":0, "message":'
 			
-			coll = data.score
+			coll = dataBase.score
 			if checkSession(self):
 				if action == 0:	# Delete game
 				   res = coll.remove({"_id":o_id})
@@ -774,7 +746,7 @@ def updateGame(param, self):
 			Pno = "P" + str(hole)
 			Lno = "L" + str(hole)
 			
-			coll = data.score
+			coll = dataBase.score
 			if len(para) > 7:
 				sData = (para[7])
 				sData = loads(sData)
@@ -820,10 +792,10 @@ def getGolfGPS(param, self):
 	try:
 		if param.get("data"):
 			courseID = int(param["data"][0])
-			coll = data.golfGPS
+			coll = dataBase.golfGPS
 			
 			def getBlocGPS(gData):
-				coll = data.blocs
+				coll = dataBase.blocs
 				doc = coll.find({"PARCOURS_ID": courseID })
 				Pdoc =dumps(gData)
 				Pdoc=loads(Pdoc)
@@ -841,7 +813,7 @@ def getGolfGPS(param, self):
 def getGame(param, self, userID = False, parcID = False):
 	try:
 		def getG(user, parc):
-			coll = data.score
+			coll = dataBase.score
 			doc = coll.find({ "USER_ID": user, "PARCOURS_ID": parc, "score_date": None })
 			if doc.count() > 0:
 				cur = cursorTOdict(doc)
@@ -874,7 +846,7 @@ def saveClub(param, self):
 			def saveBlocs(tupC, Bids):
 				""" Save blocs data for the courses """
 				blocRes = []
-				coll = data.blocs
+				coll = dataBase.blocs
 				def getBlocID():
 					#pdb.set_trace()
 					docID = coll.find({}).sort("_id",-1).limit(1)
@@ -907,7 +879,7 @@ def saveClub(param, self):
 			def saveCourses(clubID, tupC, Pids):
 				""" Save courses data for the Club """
 				courseRes = []
-				coll = data.parcours
+				coll = dataBase.parcours
 				def getCourseID():
 					docID = coll.find({}).sort("_id",-1).limit(1)
 					return int(docID[0]["_id"] + 1)
@@ -942,9 +914,9 @@ def saveClub(param, self):
 			
 			""" Save Club data """
 
-			if self.localClient or checkSession(self, role = ['ADM','MEA']):
+			if localHost or checkSession(self, role = ['ADM','MEA']):
 			#if True:
-				coll = data.club
+				coll = dataBase.club
 				def getClubID():
 					docID = coll.find({}).sort("_id",-1).limit(1)
 					return int(docID[0]["_id"] + 1)
@@ -1037,7 +1009,7 @@ def setPosition(param, self):
 		if param.get("data"):
 			param = param["data"][0]
 			para = [x for x in param.split("$")]
-			coll = data.trajet
+			coll = dataBase.trajet
 			#pdb.set_trace()
 			userId = getID(para[0])
 			timeStart = int(para[1])
@@ -1067,7 +1039,7 @@ def getPosition(param, self):
 			timeStart = int(para[1])
 			timeEnd = timeStart + 86400000	# + 24hre
 
-			coll = data.trajet
+			coll = dataBase.trajet
 			#doc = coll.find( { 'USER_ID': userId, 'startTime': timeStart})
 			if timeStart == 0:
 				doc = coll.find( { 'USER_ID': userId}).sort("_id",-1).limit(1)
@@ -1163,6 +1135,7 @@ def sendConfMail(link, email, name):
 def send_email(fromuser, recipient, subject, text, html):
 	""" Send email"""
 	# Create message container - the correct MIME type is multipart/alternative.
+	#pdb.set_trace()
 	msg = MIMEMultipart('alternative')
 	msg['Subject'] = subject
 	msg['From'] = fromuser
