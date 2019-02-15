@@ -841,8 +841,7 @@ def saveClub(param, self):
 		if param.get("data"):
 			
 			#pdb.set_trace()
-			obj = self.fields_TO_obj()
-				
+			obj = loads(param['data'][0])
 			def saveBlocs(tupC, Bids):
 				""" Save blocs data for the courses """
 				blocRes = []
@@ -884,10 +883,10 @@ def saveClub(param, self):
 					docID = coll.find({}).sort("_id",-1).limit(1)
 					return int(docID[0]["_id"] + 1)
 				def removeCourse(Pids):
-					collB = data.blocs
+					collB = dataBase.blocs
 					docs = coll.remove({"_id": {"$in": Pids } })			# Remove Courses
 					docs = collB.remove({"PARCOURS_ID": {"$in": Pids } })	# Remove Bloc Courses
-					collG = data.golfGPS
+					collG = dataBase.golfGPS
 					docs = collG.remove({"Parcours_id": {"$in": Pids } })	# Remove GPS Courses   À TESTER
 					return
 
@@ -920,11 +919,8 @@ def saveClub(param, self):
 				def getClubID():
 					docID = coll.find({}).sort("_id",-1).limit(1)
 					return int(docID[0]["_id"] + 1)
-				#pdb.set_trace()
-				##param = param["data"][0]
+
 				tupC = (0,0),(0,0)	# For new PARCOURS_ID in blocs
-				##jsonCur = loads(param)
-				##obj = dict(jsonCur)
 				oClub = obj["club"]
 				oCourses = obj["course"]
 				if 'blocs' in obj:
@@ -966,7 +962,7 @@ def saveClub(param, self):
 		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
 
 def getCourseColl(clubID):
-	collP = data.parcours
+	collP = dataBase.parcours
 	Pdocs = collP.find({"CLUB_ID": clubID })
 	Pids = []
 	for x in Pdocs:
@@ -974,7 +970,7 @@ def getCourseColl(clubID):
 	return Pids
 
 def getBlocColl(courseColl):
-	collB = data.blocs
+	collB = dataBase.blocs
 	Bdocs = collB.find({"PARCOURS_ID":{"$in": courseColl }})
 	Bids = []
 	for x in Bdocs:
@@ -986,9 +982,9 @@ def delClub(param, self):
 		if param.get("data"):
 			clubID = int(param["data"][0])
 			
-			collC = data.club
-			collP = data.parcours
-			collB = data.blocs
+			collC = dataBase.club
+			collP = dataBase.parcours
+			collB = dataBase.blocs
 			
 			# Course collection
 			Pids = getCourseColl(clubID)
