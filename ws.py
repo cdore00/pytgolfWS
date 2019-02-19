@@ -17,13 +17,18 @@ import json
 LOCAL_HOST = 'http://127.0.0.1:3000/'
 HOSTserv = LOCAL_HOST
 HOSTclient = 'http://localhost:8080/'
-HOSTcors = 'https://cdore00.github.io'
+HOSTcors = '*'
+#'https://cdore00.github.io'
 
 global logPass 
 logPass = ""
 if os.getenv('PINFO') is not None:
 	logPass = os.environ['PINFO']
-
+	
+if os.getenv('HOST') is not None:
+	HOSTcors = os.environ['HOST']
+	
+	
 # MongoDB
 import pymongo
 from pymongo import MongoClient
@@ -68,10 +73,10 @@ def exception_handler(status, message, traceback, version):
 
 
 class webServer(object):
-    
+    """ Serve Golf functions """
     def __init__(self):
-        #pdb.set_trace()
         gf.logPass = logPass
+        #print('logPass=' + logPass)
 		
     @cherrypy.expose
     def index(self, info = False):
@@ -86,11 +91,20 @@ class webServer(object):
         cookie['tcookie'] = 'testcookieValue'
         cookie['tcookie']['max-age'] = 3600 """
 
-        #query_components = parse_qs(urlparse('url?' + info).query)
         col = gf.dataBase.regions
         docs = col.find({})
         res = dumps(docs)
         return res
+
+    @cherrypy.expose
+    def getFav(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.getFav(param, self)
+
+    @cherrypy.expose
+    def updateFav(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.updateFav(param, self)
 		
     @cherrypy.expose
     def searchResult(self, info = False):
@@ -135,11 +149,6 @@ class webServer(object):
         return gf.getBloc(param, self)
 
     @cherrypy.expose
-    def getClubParcTrous(self, info = False):
-        param = parse_qs(urlparse('url?' + info).query)
-        return gf.getClubParcTrous(param, self)
-
-    @cherrypy.expose
     def identUser(self, info = False):
         cookieOut = cherrypy.response.cookie
         param = parse_qs(urlparse('url?' + info).query)
@@ -147,16 +156,18 @@ class webServer(object):
 
     @cherrypy.expose
     #@cherrypy.tools.json_in()
-    def listLog(self, passw = ""):
-        #pdb.set_trace()
-        """ param = info
-        if (param != False):
-            param = parse_qs(urlparse('url?' + info).query)""" 
+    def listLog(self, passw = ""): 
         return gf.listLog(passw, logPass)
 		
     @cherrypy.expose
-    def showLog(self, nam = ''):
-        return gf.showLog(nam)		
+    def showLog(self, name = ''):
+        #pdb.set_trace()
+        if "?" in name:
+            param = parse_qs(urlparse(name).query)
+            param = param['name'][0]
+        else:
+            param = name
+        return gf.showLog(param)		
 
     @cherrypy.expose
     def getUser(self, info = False):
@@ -182,7 +193,7 @@ class webServer(object):
     @cherrypy.expose
     def addUserIdent(self, info = False):
         param = parse_qs(urlparse('url?' + info).query)
-        return gf.addUserIdent(param, self)
+        return gf.addUserIdent(param, HOSTclient, HOSTserv, self)
 
     @cherrypy.expose
     def updUser(self, info = False):
@@ -190,9 +201,11 @@ class webServer(object):
         return gf.updateUser(param, self)
 		
     @cherrypy.expose
-    def confInsc(self, info = False):
+    def confInsc(self, data = False):
+        pos = cherrypy.request.query_string.find('?')
+        info = cherrypy.request.query_string[pos+1:]
         param = parse_qs(urlparse('url?' + info).query)
-        return gf.confInsc(param, self)
+        return gf.confInsc(param, HOSTclient, self)
 
     @cherrypy.expose
     def getPass(self, info = False):
@@ -216,19 +229,81 @@ class webServer(object):
         gf.cookie = cherrypy.request.cookie
         param = parse_qs(urlparse('url?' + info).query)
         return gf.endDelGame(param, self)	
+
+    @cherrypy.expose
+    def getGolfGPS(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.getGolfGPS(param, self)
+
+    @cherrypy.expose
+    def getGame(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.getGame(param, self)		
+
+    @cherrypy.expose
+    def countUserGame(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.countUserGame(param, self)
+
+    @cherrypy.expose
+    def getGameList(self, info = False, user = False, parc = False, skip = False, limit = False, is18 = False, date = False, tele = False, rand = False):
+        #pdb.set_trace() 
+        if user and isinstance(parc, (list)):
+            pos = cherrypy.request.query_string.find('?')
+            info = cherrypy.request.query_string[pos+1:]
+        elif user:
+            info = "user=" + user + "&parc=" + parc + "&skip=" + skip + "&limit=" + limit + "&is18=" + is18  + "&date=" + date + "&tele=" + tele
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.getGameList(param, cherrypy)
 		
+    @cherrypy.expose
+    def updateGame(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.updateGame(param, self)
 		
+    @cherrypy.expose
+    def getGameTab(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.getGameTab(param, self)
+
+    @cherrypy.expose
+    def endDelGame(self, info = False):
+        gf.cookie = cherrypy.request.cookie
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.endDelGame(param, self)
+		
+    @cherrypy.expose
+    def delClub(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.delClub(param, self)
+
+    @cherrypy.expose
+    def setPosition(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.setPosition(param, self)
+
+    @cherrypy.expose
+    def getPosition(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.getPosition(param, self)
+
+
 # Start server listening request
 def run( port = 8080, domain = '0.0.0.0'):
-   origin = '*'
+   origin = HOSTcors
+   print('HOSTcors=' + HOSTcors)
    config = {'server.socket_host': domain,
              'server.socket_port': port,   
              'tools.response_headers.on': True, 
 			 'tools.response_headers.headers': [ ('Access-Control-Allow-Origin', origin)],
-			 'error_page.default': exception_handler}
+			 'error_page.default': exception_handler,
+			 'engine.autoreload.on' : False,
+			 'log.screen': True,
+			 'log.access_file': '',
+             'log.error_file': ''}
    cherrypy.config.update(config)
-   gf.log_Info('Sarting Web server...(' + HOSTserv + ":" + str(port) + ')') 
-   print('Sarting Web server...(' + HOSTserv + ":" + str(port) + ')')   
+   gf.log_Info('Starting Web server...(' + HOSTserv + ":" + str(port) + ')') 
+   print('Starting Web server...(' + HOSTserv + ":" + str(port) + ')')   
    if HOSTserv == LOCAL_HOST:
         gf.localHost = True
    cherrypy.quickstart(webServer())	

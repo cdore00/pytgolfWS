@@ -12,6 +12,9 @@ from bson.json_util import dumps
 from bson.json_util import loads
 import json
 
+import cherrypy
+from cherrypy.lib import static
+
 def millis():
    """ returns the elapsed milliseconds (1970/1/1) since now """
    dt = datetime.now() - datetime(1970, 1, 1)
@@ -19,7 +22,8 @@ def millis():
    return ms
    
 #Log file
-LOG_DIR = os.getcwd() + '/log'
+LOG_DIR = (os.getcwd() if os.getcwd() != '/' else '') + '/log'
+#pdb.set_trace()
 if not os.path.exists(LOG_DIR):
 	os.makedirs(LOG_DIR)
 LOG_FILE = LOG_DIR + '/' + str(int(millis())) + '.log'
@@ -28,6 +32,15 @@ print("logfile= " + LOG_FILE)
 localHost = False
 cookie = ""
 
+def except_handler(fn, e):
+	""" EXCEPTION """
+	#pdb.set_trace()
+	info = fn + " ERROR: " + str(e)
+	print( info )
+	log_Info( info )
+	#return
+	
+	
 def getID(strID):
 	if len(strID) < 5:
 		return int(strID)
@@ -60,7 +73,7 @@ def checkSession(self, role = None):
 	else:
 		return False
 
-def addUserIdent(param, self):
+def addUserIdent(param, HOSTclient, HOSTserv, self):
 	""" To add new user account """
 	try:
 		if param.get("email") and param.get("pass"):
@@ -77,7 +90,7 @@ def addUserIdent(param, self):
 				doc = cursorTOdict(docs)
 				if doc['actif'] == False:
 					if doc['motpass'] == passw:
-						sendConfMail( HOSTserv + "confInsc?data=" + email , email, doc['Nom'])
+						sendConfMail( HOSTclient + "confInsc?data=" + email , email, doc['Nom'])
 						return dumps({"code":1, "message": "S0050"})	#existInactif(doc)
 					else:
 						return dumps({"code":3, "message": "S0051"})
@@ -90,15 +103,15 @@ def addUserIdent(param, self):
 				if name == "":
 					name = email
 
-				sendConfMail( HOSTserv + "confInsc?data=" + email , email, name)
+				sendConfMail( HOSTclient + "confInsc?data=" + email , email, name)
 				log_Info("Nouveau compte créé: " + email)
 				return dumps({"code":-1, "message": "S0052"})
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("addUserIdent", ex)
 		
-def confInsc(param, self):
+def confInsc(param, HOSTclient, self):
 	""" To Confirm new account"""
 	try:
 		if param.get("data"):
@@ -116,8 +129,8 @@ def confInsc(param, self):
 				return redir
 		else:	
 			return("Confirm" + str(param))		
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("confInsc", ex)
 		
 def getPass(param, self):
 	""" Recover password by email """
@@ -133,8 +146,8 @@ def getPass(param, self):
 				return dumps({"code": 1, "message": "S0055"})
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("getPass", ex)
 
 def getPassForm(self):
 	""" Return HTML code form to change password """
@@ -190,8 +203,8 @@ def authUser(param, self, cookie):
 				return dumps({'resp': {"result": 0} })	# User is empty
 		else:
 			return dumps({'resp': {"result": 0} })	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("authUser", ex)
 		
 def saveUser(param, self):
 	""" To modify user account info"""
@@ -234,8 +247,8 @@ def saveUser(param, self):
 			return dumps({ })	# modified
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))	
+	except Exception as ex:
+		except_handler("saveUser", ex)	
 
 def getUserInfo(param, self):
 	""" Get user account info by administrator"""
@@ -257,8 +270,8 @@ def getUserInfo(param, self):
 				return dumps(doc)	
 		else: 
 			return ('{"n":0,"ok":0, "message": "S0062"}')	
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("", ex)
 		
 def updateUser(param, self):
 	""" To modify user account info by administrator"""
@@ -282,8 +295,8 @@ def updateUser(param, self):
 				return dumps({'ok': 0})	# No param
 		else: 
 			return ('{"n":0,"ok":0, "message": "S0062"}')
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))			
+	except Exception as ex:
+		except_handler("updateUser", ex)			
 		
 		
 def savePassword(param, self):
@@ -307,8 +320,8 @@ def savePassword(param, self):
 				return dumps({'ok': 0})	# No param
 		else: 
 			return ('{"n":0,"ok":0, "message": "S0062"}')
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))				
+	except Exception as ex:
+		except_handler("savePassword", ex)				
 
 
 def getRegionList():
@@ -327,8 +340,8 @@ def getParcInfo(param, self):
 			return dumps(docs)
 		else:
 			return dumps({'ok': 0})	# No param	
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))			
+	except Exception as ex:
+		except_handler("getParcInfo", ex)			
 	
 def searchResult(param, self):
 
@@ -363,8 +376,10 @@ def searchResult(param, self):
 		docs = col.find(query).sort("nom")
 		res = dumps(docs)
 		return res
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+
+	except Exception as ex:
+		except_handler("searchResult", ex)
+
 
 def getFav(param, self):
 	try:
@@ -385,8 +400,8 @@ def getFav(param, self):
 			return getClubNameList(ids)
 		else:
 			return dumps({'ok': 0})	# No param		
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("getFav", ex)
 		
 def updateFav(param, self):
 	""" Add club to user favorite list"""
@@ -412,8 +427,8 @@ def updateFav(param, self):
 			return dumps(r)
 		else:
 			return dumps({'ok': 0})	# No param	
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("updateFav", ex)
 		
 			
 def getClubList(param, self):
@@ -449,8 +464,8 @@ def getClubData(param, self):
 			return dumps(oData)
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + str(sys.exc_info()[1]))		
+	except Exception as ex:
+		except_handler("getClubData", ex)		
 		
 def getClubParc(param, self):
 	""" To get club and his courses info"""
@@ -484,8 +499,8 @@ def getClubParc(param, self):
 			return (dumps([(isFavorite(dic))]))
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("getClubParc", ex)
 		
 def getBloc(param, self):
 	try:	
@@ -498,8 +513,8 @@ def getBloc(param, self):
 			return dumps(docs)
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))	
+	except Exception as ex:
+		except_handler("getBloc", ex)	
 		
 def getClubParcTrous(param, self):
 	try:
@@ -526,8 +541,8 @@ def getClubParcTrous(param, self):
 
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("getClubParcTrous", ex)
 
 def setGolfGPS(param, self):
 	try:
@@ -565,8 +580,8 @@ def setGolfGPS(param, self):
 				return ('{"n":0,"ok":0, "message": "S0062"}')
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("setGolfGPS", ex)
 		
 def countUserGame(param, self):
 	try:
@@ -593,11 +608,11 @@ def countUserGame(param, self):
 				return ('{"count":' + str(count) + '}')
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))		
+	except Exception as ex:
+		except_handler("countUserGame", ex)		
 
-		
-def getGameList(param, self):
+
+def getGameList(param, cpy):
 	"""Return game list result """
 	try:
 		if param.get("user"):
@@ -620,24 +635,30 @@ def getGameList(param, self):
 
 			cur = []
 			coll = dataBase.score
-			
+
 			def addCur(doc):
-				
+				#pdb.set_trace()
 				for x in doc:
-					if intTele != 2:  # If Not JSON then convert millisecond to date and ObjectId
+					if intTele != 2: 	# If not JSON format Date
 						ts = x['score_date'] / 1000
 						x['score_date'] = datetime.fromtimestamp(ts).strftime('%Y-%m-%d')
+					if intTele != 1:	# If CSV format _id
 						x['_id'] = str(x['_id'])
-					cur.append(x)
+						rd = x
+					else:  				# If CSV then personalize column head
+						rd = {'Course': x['name'], 'Date':x['score_date'], 'Hole1':int(x['T1']), 'Put1':int(x['P1']), 'Pen1':int(x['L1']), 'Hole2':int(x['T2']), 'Put2':int(x['P2']), 'Pen2':int(x['L2']), 'Hole3':int(x['T3']), 'Put3':int(x['P3']), 'Pen3':int(x['L3']), 'Hole4':int(x['T4']), 'Put4':int(x['P4']), 'Pen4':int(x['L4']), 'Hole5':int(x['T5']), 'Put5':int(x['P5']), 'Pen5':int(x['L5']), 'Hole6':int(x['T6']), 'Put6':int(x['P6']), 'Pen6':int(x['L6']), 'Hole7':int(x['T7']), 'Put7':int(x['P7']), 'Pen7':int(x['L7']), 'Hole8':int(x['T8']), 'Put8':int(x['P8']), 'Pen8':int(x['L8']), 'Hole9':int(x['T9']), 'Put9':int(x['P9']), 'Pen9':int(x['L9']), 'Hole10':int(x['T10']), 'Put10':int(x['P10']), 'Pen10':int(x['L10']), 'Hole11':int(x['T11']), 'Put11':int(x['P11']), 'Pen11':int(x['L11']), 'Hole12':int(x['T12']), 'Put12':int(x['P12']), 'Pen12':int(x['L12']), 'Hole13':int(x['T13']), 'Put13':int(x['P13']), 'Pen13':int(x['L13']), 'Hole14':int(x['T14']), 'Put14':int(x['P14']), 'Pen14':int(x['L14']), 'Hole15':int(x['T15']), 'Put15':int(x['P15']), 'Pen15':int(x['L15']), 'Hole16':int(x['T16']), 'Put16':int(x['P16']), 'Pen16':int(x['L16']), 'Hole17':int(x['T17']), 'Put17':int(x['P17']), 'Pen17':int(x['L17']), 'Hole18':int(x['T18']), 'Put18':int(x['P18']), 'Pen18':int(x['L18'])}
+						#, 'others': ''
+						#if 'others' in x:
+						#	rd['others'] = x['others']
+					cur.append(rd)
 				
 				if (intTele > 0):	# Request for download result in file
-					self.send_response(200)
-					self.send_header('Content-type','text/html')
-					self.send_header('Access-Control-Allow-Origin', '*')
+
 					if (intTele == 2):	# JSON file
-						self.send_header('Content-disposition', 'attachment; filename=myScore.json')
-						self.end_headers()
-						self.wfile.write(bytes(dumps(cur), "utf8"))
+						cpy.response.headers['Content-type'] = 'text/plain'
+						cpy.response.headers['Content-disposition'] = 'attachment; filename=myScore.json'
+						return bytes(dumps(cur), "utf8")
+
 					if (intTele == 1):	# CSV file
 						outFile = io.StringIO()
 						output = csv.writer(outFile, delimiter=';')
@@ -647,11 +668,12 @@ def getGameList(param, self):
 
 						contents = outFile.getvalue()
 						outFile.close()
-						self.send_header('Content-disposition', 'attachment; filename=myScore.csv')
-						self.end_headers()
-						self.wfile.write(bytes(contents, "utf8"))
-					return False
-				else:	# Request for HTML page
+
+						cpy.response.headers['Content-type'] = 'text/plain'
+						cpy.response.headers['Content-disposition'] = 'attachment; filename=myScore.csv'						
+						return bytes(contents, "utf8")
+						
+				else:				# Request for HTML page
 					return dumps(cur)
 
 			if is18 == 18:
@@ -663,13 +685,19 @@ def getGameList(param, self):
 
 			if parc != 0:
 				qO["PARCOURS_ID"] = parc				
+
+			#qF = ["_id","USER_ID","PARCOURS_ID","name","score_date","T1","T2","T3","T4","T5","T6","T7","T8","T9","T10","T11","T12","T13","T14","T15","T16","T17","T18","others"]
+			#qF = ["name","score_date","T1","T2","T3","T4","T5","T6","T7","T8","T9","T10","T11","T12","T13","T14","T15","T16","T17","T18"]
 			doc = coll.find(qO).sort("score_date",-1).skip(skip).limit(limit)
 			return addCur(doc)
 			
 		else:
 			return dumps({'ok': 0})	# No param
 	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+		x=y
+	
+		#Exception as ex:
+		#except_handler("getGameList intTele=" + str(intTele), ex)
 		
 def getGameTab(param, self):
 	try:
@@ -695,8 +723,8 @@ def getGameTab(param, self):
 				return(getBloc(doc))
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))		
+	except Exception as ex:
+		except_handler("getGameTab", ex)		
 
 def endDelGame(param, self):
 	try:
@@ -723,8 +751,8 @@ def endDelGame(param, self):
 				return (resErr)
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("endDelGame", ex)
 		
 def updateGame(param, self):
 	try:
@@ -785,8 +813,8 @@ def updateGame(param, self):
 			return getGame(None, self, userID = user, parcID = parc)
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("updateGame", ex)
 		
 def getGolfGPS(param, self):
 	try:
@@ -807,8 +835,8 @@ def getGolfGPS(param, self):
 			return getBlocGPS(doc)
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("getGolfGPS", ex)
 		
 def getGame(param, self, userID = False, parcID = False):
 	try:
@@ -831,8 +859,8 @@ def getGame(param, self, userID = False, parcID = False):
 				return getG(user, parc)
 		else:
 			return getG(userID, parcID)
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("getGame", ex)
 
 def saveClub(param, self):
 	""" Save Club, courses and blocs data """
@@ -958,8 +986,8 @@ def saveClub(param, self):
 				return ('{"n":0,"ok":0, "message": "S0062"}')	# Check Session error
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("saveClub", ex)
 
 def getCourseColl(clubID):
 	collP = dataBase.parcours
@@ -997,8 +1025,8 @@ def delClub(param, self):
 			return dumps(doc)
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("delClub", ex)
 
 def setPosition(param, self):
 	try:
@@ -1023,8 +1051,8 @@ def setPosition(param, self):
 			return dumps(doc)
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("setPosition", ex)
 		
 def getPosition(param, self):
 	try:
@@ -1049,8 +1077,8 @@ def getPosition(param, self):
 				return dumps({'length': 0, 'timeStart': timeStart})
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		log_Info( " ERROR: " + sys.exc_info()[0] + " ; " + str(sys.exc_info()[1]))
+	except Exception as ex:
+		except_handler("getPosition", ex)
 		
 # Manage logs
 
@@ -1084,21 +1112,23 @@ def listLogs():
 		f = os.stat(LOG_DIR + '/' + line)
 		t = time.ctime(f.st_ctime)
 		s = f.st_size
-		cont = cont + '<a target="_blank" href="./showLog?nam=' + line + '">' + line + "\t" + t + "\t" + str(int(s/1024) + 1) + " ko" '</a></br>'
+		cont = cont + '<a target="_blank" href="./showLog?name=' + line + '">' + line + "\t" + t + "\t" + str(int(s/1024) + 1) + " ko" '</a></br>'
 	#print(fileList)
 	return(str(cont))
 	
 def showLog(param):
 	""" Display log file"""
-
-	fileName = param
-	lines = [line.rstrip('\n') for line in open(LOG_DIR + "/" + fileName)]
-	f = os.stat(LOG_DIR + '/' + fileName)
-	cont = '<h2>' + fileName + "  " + time.ctime(f.st_ctime) + '</h2>'
-	for line in lines:
-		cont = cont + line + '</br>'
-	return(str(cont))
-
+	try:
+		#pdb.set_trace()
+		fileName = param
+		lines = [line.rstrip('\n') for line in open(LOG_DIR + "/" + fileName)]
+		f = os.stat(LOG_DIR + '/' + fileName)
+		cont = '<h2>' + fileName + "  " + time.ctime(f.st_ctime) + '</h2>'
+		for line in lines:
+			cont = cont + line + '</br>'
+		return(str(cont))
+	except Exception as ex:
+		except_handler("showLog", ex)
 	
 
 # Send mail
@@ -1114,7 +1144,7 @@ def sendRecupPassMail(eMail, name, passw):
 	log_Info("Récupérer mot de passe de " + name + " : " + eMail)
 	send_email(fromuser, eMail, subject, text, html)
 
-def sendConfMail(link, email, name):
+def sendConfMail(HOSTclient, email, name):
 
 	recipient = email
 	subject = "Golf du Québec - Confirmer l'inscription de cdore00@yahoo.com"
@@ -1122,10 +1152,10 @@ def sendConfMail(link, email, name):
 	fromuser = "Golf du Québec"
 
 	# Create the body of the message (a plain-text and an HTML version).
-	text = "Hi %s!\nCliquer ce lien pour confirmer l\'inscription de votre compte:\n%s\n\nGolf du Québec" % (name, link)
+	text = "Hi %s!\nCliquer ce lien pour confirmer l\'inscription de votre compte:\n%s\n\nGolf du Québec" % (name, HOSTclient)
 	html = """\
 	<html><body><div style="text-align: center;"><div style="background-color: #3A9D23;height: 34px;"><div style="margin: 3px;float:left;"><img alt="Image Golf du Québec" width="25" height="25" src="https://cdore00.github.io/golf/images/golf.png" /></div><div style="font-size: 22px;font-weight: bold;color: #ccf;padding-top: 5px;">Golfs du Qu&eacute;bec</div></div></br><a href="%s" style="font-size: 20px;font-weight: bold;">Cliquer ce lien pour confirmer l\'inscription de votre compte:<p>%s</p> </a></br></br></br><p><div id="copyright">Copyright &copy; 2005-2018</div></p></div></body></html>
-	""" % (link, email)
+	""" % (HOSTclient, email)
 	send_email(fromuser, recipient, subject, text, html)
 
 def send_email(fromuser, recipient, subject, text, html):
