@@ -90,7 +90,7 @@ def addUserIdent(param, HOSTclient, HOSTserv, self):
 				doc = cursorTOdict(docs)
 				if doc['actif'] == False:
 					if doc['motpass'] == passw:
-						sendConfMail( HOSTclient + "confInsc?data=" + email , email, doc['Nom'])
+						sendConfMail( HOSTserv + "confInsc?data=" + email , email, doc['Nom'])
 						return dumps({"code":1, "message": "S0050"})	#existInactif(doc)
 					else:
 						return dumps({"code":3, "message": "S0051"})
@@ -103,7 +103,7 @@ def addUserIdent(param, HOSTclient, HOSTserv, self):
 				if name == "":
 					name = email
 
-				sendConfMail( HOSTclient + "confInsc?data=" + email , email, name)
+				sendConfMail( HOSTserv + "confInsc?data=" + email , email, name)
 				log_Info("Nouveau compte créé: " + email)
 				return dumps({"code":-1, "message": "S0052"})
 		else:
