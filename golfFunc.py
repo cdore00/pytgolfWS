@@ -337,7 +337,15 @@ def getParcInfo(param, self):
 			parcID = getID(param["data"][0])
 			coll = dataBase.parcours
 			docs = coll.find({"_id": parcID})
-			return dumps(docs)
+			pBlc = {}
+			pBlc['data'] = [str(parcID)]
+
+			#pdb.set_trace()
+			oData = {}
+			gps = getGolfGPS(pBlc, self, True)
+			oData["courseInfo"] = (gps)
+			#getBloc(pBlc, self)
+			return dumps(oData)
 		else:
 			return dumps({'ok': 0})	# No param	
 	except Exception as ex:
@@ -816,7 +824,7 @@ def updateGame(param, self):
 	except Exception as ex:
 		except_handler("updateGame", ex)
 		
-def getGolfGPS(param, self):
+def getGolfGPS(param, self, noDump = False):
 	try:
 		if param.get("data"):
 			courseID = int(param["data"][0])
@@ -828,7 +836,10 @@ def getGolfGPS(param, self):
 				Pdoc =dumps(gData)
 				Pdoc=loads(Pdoc)
 				Pdoc[0]['parc'] = doc
-				return dumps(Pdoc)
+				if noDump:
+					return (Pdoc)
+				else:
+					return dumps(Pdoc)
 
 			doc = coll.find({"Parcours_id": courseID }).sort("trou")
 

@@ -127,6 +127,11 @@ class webServer(object):
         return gf.getClubParc(param, self)
 
     @cherrypy.expose
+    def getParcInfo(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.getParcInfo(param, self)
+		
+    @cherrypy.expose
     def setGolfGPS(self, info = False):
         gf.cookie = cherrypy.request.cookie
         param = parse_qs(urlparse('url?' + info).query)
