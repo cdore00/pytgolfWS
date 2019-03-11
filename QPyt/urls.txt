@@ -1,0 +1,5 @@
+{"user": "cdore00@yahoo.ca",
+"coll": [
+{"name": "OpenShift", "url": "https://pytgolfapp-cd-serv.1d35.starter-us-east-1.openshiftapps.com/"}, 
+{"name": "Vultr", "url": "https://cdore.ddns.net/pyt/"}
+]}
