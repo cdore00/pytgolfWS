@@ -23,6 +23,19 @@ color: red;
 }
 </style>
 
+<script type="text/javascript"> 
+<!--
+
+
+function close(){
+window.close();
+}
+
+
+// -->
+</script>
+
+
 </head>     
 <body>
   <div class="divCenter">
@@ -35,13 +48,14 @@ color: red;
   <input type="text" size="20" maxlength="100" name="user" value="$defaultUser"></br>
   <input type="password" size="20" maxlength="100" name="passw"></br>
 
- <h3>Location delay</h3>
+ <h3>Options</h3>
   <input type="text" size="2" maxlength="2" name="delay" value="10">Second</br>
-
+  $optCheck
+  
   <h3>Server</h3>
   $optionList
 
-    <input class="but" type="submit" name="save" value="Start"><input class="but" type="submit" name="cancel" value="Cancel">
+    <input class="but" type="submit" name="save" value="Start"><input class="but" type="submit" name="cancel" onclick="close()" value="Cancel">
   </div>
 
 </form>

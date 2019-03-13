@@ -61,7 +61,7 @@ color: red;
 var dat = $action ;
 
 //var dat = [1, [],[]]
-//[1, [{'bearing': 0, 'altitude': 118, 'provider': 'gps', 'sent':1, 'dist':122.5, 'longitude': -71.229320759999993, 'time': 1552279052000, 'latitude': 46.803383169999996, 'speed': 0, 'accuracy': 28.822999954223633}, {'bearing': 0, 'altitude': 106, 'provider': 'gps', 'longitude': -71.229327190000006, 'time': 1552279072000, 'latitude': 46.803414740000001, 'speed': 0, 'accuracy': 36.407997131347656}, {'bearing': 0, 'altitude': 105, 'provider': 'gps', 'longitude': -71.229333609999998, 'time': 1552279082000, 'latitude': 46.803432100000002, 'speed': 0, 'accuracy': 43.993000030517578}, {'bearing': 0, 'altitude': 106, 'provider': 'gps', 'longitude': -71.229337099999995, 'time': 1552279093000, 'latitude': 46.80343697, 'speed': 0, 'accuracy': 37.924999237060547}, {'bearing': 0, 'altitude': 104, 'provider': 'gps', 'longitude': -71.229331790000003, 'time': 1552279104000, 'latitude': 46.803439650000001, 'speed': 0, 'accuracy': 42.475997924804688}, {'bearing': 0, 'altitude': 104, 'provider': 'gps', 'longitude': -71.229335419999998, 'time': 1552279113000, 'latitude': 46.803443989999998, 'speed': 0, 'accuracy': 31.856998443603516}, {'bearing': 0, 'altitude': 105, 'provider': 'gps', 'longitude': -71.229342919999993, 'time': 1552279124000, 'latitude': 46.803447179999999, 'speed': 0, 'accuracy': 56.128997802734375}], ["Erreur1"]];
+//[{"run":1}, [{'bearing': 0, 'altitude': 118, 'provider': 'gps', 'sent':1, 'dist':122.5, 'longitude': -71.229320759999993, 'time': 1552279052000, 'latitude': 46.803383169999996, 'speed': 0, 'accuracy': 28.822999954223633}, {'bearing': 0, 'altitude': 106, 'provider': 'gps', 'longitude': -71.229327190000006, 'time': 1552279072000, 'latitude': 46.803414740000001, 'speed': 0, 'accuracy': 36.407997131347656}, {'bearing': 0, 'altitude': 105, 'provider': 'gps', 'longitude': -71.229333609999998, 'time': 1552279082000, 'latitude': 46.803432100000002, 'speed': 0, 'accuracy': 43.993000030517578}, {'bearing': 0, 'altitude': 106, 'provider': 'gps', 'longitude': -71.229337099999995, 'time': 1552279093000, 'latitude': 46.80343697, 'speed': 0, 'accuracy': 37.924999237060547}, {'bearing': 0, 'altitude': 104, 'provider': 'gps', 'longitude': -71.229331790000003, 'time': 1552279104000, 'latitude': 46.803439650000001, 'speed': 0, 'accuracy': 42.475997924804688}, {'bearing': 0, 'altitude': 104, 'provider': 'gps', 'longitude': -71.229335419999998, 'time': 1552279113000, 'latitude': 46.803443989999998, 'speed': 0, 'accuracy': 31.856998443603516}, {'bearing': 0, 'altitude': 105, 'provider': 'gps', 'longitude': -71.229342919999993, 'time': 1552279124000, 'latitude': 46.803447179999999, 'speed': 0, 'accuracy': 56.128997802734375}], ["Erreur1"]];
 
 function showAll(oLi){
 var x = document.getElementsByClassName("viewCtl");
@@ -100,12 +100,16 @@ if (dat[1].length == 0){
 	locState.innerHTML = "Start locating...";
 	setTimeout(function(){ document.getElementById('butRefresh').click() }, 3000);
 }else{
-	if (dat[0] == 0)
+	if (dat[0].run == 0){
 		locState.innerHTML = "Locating stopping...";
-	if (dat[0] == 1)
+			setTimeout(function(){ document.getElementById('butRefresh').click() }, 3000);
+	}
+	if (dat[0].run == 1)
 		locState.innerHTML = "Locating running...";
-	if (dat[0] == 2)
+	if (dat[0].run == 2){
 		locState.innerHTML = "Location stopped.";
+			setTimeout(function(){ document.getElementById('butRefresh').click() }, 2000);
+    }
 }
 locState.innerHTML += (message == "") ? "":" (ERROR!)"
 var listData = document.getElementById('listData');
@@ -131,6 +135,7 @@ for(var i = dat[1].length - 1; i > -1 ; i--){
 <span id="mess" class="mess"></span>
 <form action="/stop" method="GET">
     <input id="butStop" type="submit" name="stop" value="Stop location"></br></br></br>
+	<input id="butStart" type="submit" name="start" value="Start options"></br></br>
 	<input id="butRefresh" type="submit" name="refresh" value="Refresh display"></br></br>
 <div class="divLeft">
 

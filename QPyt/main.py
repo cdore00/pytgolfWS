@@ -1,178 +1,107 @@
-#!/usr/bin/python
-import andUI
-import androidhelper
+objUI = oUI = None
+curUser = optNotify = optToast = optServ = optList = optCheck = ""
 
-droid = androidhelper.Android()
-
+#import app as oUI
+import pdb
 #; pdb.set_trace()
-import threading
-import os, time, json, math
-#import android
-from datetime import datetime
-import string
-import urllib.request, urllib.parse, urllib.error
+from bottle import run, route, debug, template, request, Bottle, ServerAdapter
+import json, sys
 
-global startTime
- 
-def millis():
-   """ returns the elapsed milliseconds (1970/1/1) since now """
-   dt = datetime.now() - datetime(1970, 1, 1)
-   ms = (dt.days * 24 * 60 * 60 + dt.seconds) * 1000 + dt.microseconds / 1000.0
-   return str(int(ms))
+"""
+import androidhelper
+droid = androidhelper.Android()
+path = "/storage/emulated/0/qpython/golf/"
 
-startTime = millis()
-print("startTime= " + startTime)
+initConfig = oUI.readConfig()
+"""
+path = ""
+f = open(path + "urls.txt")
+initConfig = json.load(f)
+#"""
+output = template(path + 'bottle.tpl')
+outputrun = template(path + 'bottlerun.tpl')
 
-#droid = android.Android()
+i = 1
+for s in initConfig['coll']:
+   chk = "checked" if i == 1 else ""
+   opt = '<label for="opt%s"><input id="opt%s" type="radio" name="server" %s value="%s">%s</input></label><br><br>' % (i, i, chk, s['url'], s['name'])
+   #print(opt)
+   optList += opt
+   i += 1
 
-class locThread (threading.Thread):
-   def __init__(self, threadID, name, oUI, urlServ, delay, duration):
-      threading.Thread.__init__(self)
-      self.threadID = threadID
-      self.name = name
-      self.oUI = oUI
-      self.counter = 1
-      self.delay = delay
-      self.lastLoc = {'time': startTime}
-      self.dure = duration
-      self.url = urlServ
-      #self.time = {'time': startTime}
-   def run(self):
-      print ( self.name + " Starting location...")
-      andUI.notify( "Golf Québec", " Starting location...")
-      while self.oUI.runflag:   #self.counter:
-         res = locate(self.delay)
-         if res == {}:
-            andUI.toast(str(self.counter) + ' - ' + 'GPS no succes')		 
-         if res != {}:
-            mess = md = co = ""
-            #print(mess)
-            dis = 0
-            if 'latitude' in self.lastLoc:
-               dis = calculDistance(self.lastLoc, res)
-            elaps = 0
-            elaps = res['time'] - int(self.lastLoc['time']) 
-            self.lastLoc = res
-            acc = round(res['accuracy'],0)
-            md = str(self.counter) + ' - Dist.' + str(dis) + " Alt." + str(res['altitude']) + " Acc." + str(acc)
-            co = str(round(res['latitude'],7))  + "\nElaps:" + str(elaps/1000)
-            mess = md + "\n" + co
-            if self.oUI.runflag:
-               andUI.toast(mess)
-               andUI.notify(md,co)
-               r = set_pos(self.url, res['latitude'], res['longitude'], res['altitude'])
-         self.counter += 1
-         time.sleep(self.dure)
-      print("Exiting " + self.name)
+curUser = initConfig['user']
+ioutput = output.replace("$defaultUser", curUser)
 
 
-class UIThread():
-   def __init__(self, start):
-      self.runflag = True
-      print ("Starting UIThread...")
-      #os._exit(1)
-
-   def run(self,urlServer=None, delay=60):
-      if not urlServer:
-         ul = readConfig()
-         lbl = []
-         for s in ul['coll']:
-            lbl.append(s['name'])
-         #print(str(ul))
-         chx = andUI.dialog_list("Select server", lbl)
-         for s in ul['coll']:
-            if s['name'] == lbl[chx['item']]:
-               urlServer = (s['url'])
-      
-         print( 'urlServer=' + urlServer)  
-      thread1 = locThread(1, "Thread-loc", self, urlServer, int(delay), 1)
-      thread1.start()
+def initOutput():
+   global ioutput, optNotify, optToast, optServ, optList, optCheck, curUser
    
-   def stop(self):
-      self.runflag = False
+   optCheck = '<label for="optToast"><input id="optToast" type="checkbox" name="optToast" %s value="toast">Show toast</input></label>' % ("checked" if optToast else "")
+   optCheck += '<label for="optNotify"><input id="optNotify" type="checkbox" name="optNotify" %s value="notify">Show notify</input></label>' % ("checked" if optNotify else "")
+   #pdb.set_trace()
+   ioutput = output.replace("$defaultUser", curUser)
+   ioutput = ioutput.replace("$optionList", optList)
+   ioutput = ioutput.replace("$optCheck", optCheck)
+   return ioutput
+
+@route('/start', method='GET')
+def start_loc():
+    global objUI, oUI, optNotify, optToast, optServ, optList, optCheck, curUser
+    if request.GET.save:
+        
+        user = request.GET.user.strip()
+        passw = request.GET.passw.strip()
+        optServ = request.GET.server.strip()
+        delay = request.GET.delay.strip()
+        optToast = request.GET.optToast.strip()
+        optNotify = request.GET.optNotify.strip()
+		
+        print(str(user))
+        
+        curUser = user
+
+        if oUI:
+           #pdb.set_trace()
+           objUI = oUI.UIThread(None)
+           objUI.run(optServ, delay= delay)
+           data = str(objUI.state)
+        else:
+           data = "[{'run':1}, [{'bearing': 0, 'altitude': 118, 'provider': 'gps', 'sent':1, 'dist':122.5, 'longitude': -71.229320759999993, 'time': 1552279052000, 'latitude': 46.803383169999996, 'speed': 0, 'accuracy': 28.822999954223633}, {'bearing': 0, 'altitude': 106, 'provider': 'gps', 'longitude': -71.229327190000006, 'time': 1552279072000, 'latitude': 46.803414740000001, 'speed': 0, 'accuracy': 36.407997131347656}, {'bearing': 0, 'altitude': 105, 'provider': 'gps', 'longitude': -71.229333609999998, 'time': 1552279082000, 'latitude': 46.803432100000002, 'speed': 0, 'accuracy': 43.993000030517578}, {'bearing': 0, 'altitude': 106, 'provider': 'gps', 'longitude': -71.229337099999995, 'time': 1552279093000, 'latitude': 46.80343697, 'speed': 0, 'accuracy': 37.924999237060547}, {'bearing': 0, 'altitude': 104, 'provider': 'gps', 'longitude': -71.229331790000003, 'time': 1552279104000, 'latitude': 46.803439650000001, 'speed': 0, 'accuracy': 42.475997924804688}, {'bearing': 0, 'altitude': 104, 'provider': 'gps', 'longitude': -71.229335419999998, 'time': 1552279113000, 'latitude': 46.803443989999998, 'speed': 0, 'accuracy': 31.856998443603516}, {'bearing': 0, 'altitude': 105, 'provider': 'gps', 'longitude': -71.229342919999993, 'time': 1552279124000, 'latitude': 46.803447179999999, 'speed': 0, 'accuracy': 56.128997802734375}], ['Erreur1']]"
+        return outputrun.replace("$action", data)
+
+    if request.GET.cancel:
+        print("EXIT")
+        sys.stderr.close()
 
 
+@route('/stop', method='GET')
+def stop_ref():
+   global objUI, oUI, optNotify, optToast, optServ, optList, optCheck
+   if request.GET.stop:
+      #pdb.set_trace()
+      if oUI:
+         objUI.stop()
+         return outputrun.replace("$action", str(objUI.state))
+      else:	#Local
+         #pdb.set_trace()
+         return initOutput()
+	  
+   if request.GET.refresh:
+      return outputrun.replace("$action", str(objUI.state))
+	  
+   if request.GET.start:
+      return initOutput()
+         
+   else:
+     return output
 
-def locate(DELAI):
-  while True:
-    droid.startLocating(minDistance=10000)
-    time.sleep(DELAI)
-    loc = droid.readLocation().result
-    if loc == {}:
-       print('GPS no succes')
-      #return loc
-    if loc != {}:
-       try:
-         n = loc['gps']
-       except KeyError:
-         n = loc['network']
-       #print(str(loc))
-       return n
-       break
-    droid.stopLocating() 
-
-def calculDistance(pt1, pt2):
-   lat1 = pt1['latitude']
-   lat2 = pt2['latitude']
-   lon1 = pt1['longitude']
-   lon2 = pt2['longitude']
-
-   R = 6967410.324 # Rayon moyen en verge
-   rLat1 = lat1 * (math.pi / 180)
-   rLat2 = lat2 * (math.pi / 180)
-   dLat = (lat2-lat1) * (math.pi / 180)
-   dLon = (lon2-lon1) * (math.pi / 180)
-   a = (math.sin(rLat1) * math.sin(rLat2)) + (math.cos(rLat1) * math.cos(rLat2) * math.cos(dLon))
-   if abs(a) > 1:
-      print('val etror: ' + str(a))
-      a = 1
-   ac = math.acos(a)
-
-   d = R * ac
-   d = round(d)
-   #print(str(d))
-   return d
-
-
-def set_pos(urlServ, lat, lng, acc, user = '80'):
-  """Post data to golf service"""
-  param = "data=%s$%s$%s$%s$%s$%s" % (user, startTime, millis(), str(lat), str(lng), str(acc))
-  url = urlServ + 'setPosition?' + param
-  resp_json = urllib.request.urlopen(url).read().decode('utf-8')
-  return resp_json
-
-def readConfig():
-   path = "/storage/emulated/0/qpython/golf/urls.txt"
-   f = open(path)
-   return json.load(f)
-
-def run(urlServer=None):
-   if not urlServer:
-      ul = readConfig()
-      lbl = []
-      for s in ul['coll']:
-         lbl.append(s['name'])
-      #print(str(ul))
-      chx = andUI.dialog_list("Select server", lbl)
-      for s in ul['coll']:
-         if s['name'] == lbl[chx['item']]:
-            urlServer = (s['url'])
-      
-      print( 'urlServer=' + urlServer)  
-   #thread1 = locThread(1, "Thread-loc", urlServer, 60, 5)
-   #thread1.start()
-
-
-def start():
-   ui = UIThread(startTime)
-   ui.run()
-
+@route('/', method='GET')
+def default():
+   return initOutput()
  
-#ui = UIThread(startTime)
-#start()
-
-
-# Start new Threads
-#thread1.start()
-
-print("Exiting Main Thread")
+	#add this at the very end:
+	#debug(True)
+	#run(reloader=True)
+if oUI:
+   droid.webViewShow('http://localhost:8080/')
+run()
