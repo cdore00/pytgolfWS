@@ -28,7 +28,6 @@ if os.getenv('PINFO') is not None:
 if os.getenv('HOST') is not None:
 	HOSTcors = os.environ['HOST']
 	
-	
 # MongoDB
 import pymongo
 from pymongo import MongoClient
@@ -154,7 +153,9 @@ class webServer(object):
         return gf.getBloc(param, self)
 
     @cherrypy.expose
-    def identUser(self, info = False):
+    def identUser(self, info = False, user = False, passw = False):
+        if user:
+           info = "user=" + user + "&pass=" + passw
         cookieOut = cherrypy.response.cookie
         param = parse_qs(urlparse('url?' + info).query)
         return gf.authUser(param, self, cookieOut)
@@ -283,7 +284,9 @@ class webServer(object):
         return gf.delClub(param, self)
 
     @cherrypy.expose
-    def setPosition(self, info = False):
+    def setPosition(self, info = False, data= False):
+        if (data):
+           info = "data=" + data
         param = parse_qs(urlparse('url?' + info).query)
         return gf.setPosition(param, self)
 
