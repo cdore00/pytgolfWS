@@ -14,6 +14,7 @@ width:100%;
 .divLeft{
 text-align: left;
 display: inline-block;
+overflow-x: inherit
 }
 #mess{
 color: red;
@@ -53,6 +54,10 @@ padding-left: 0px;
 .mess{
 color: red;
 }
+.but {
+    width: 8em;
+    margin: 10px;
+}
 
 </style>
 
@@ -87,7 +92,7 @@ if (oLi.innerHTML == "+"){
 }
 
 function listItems(){
-//	alert(dat)
+//alert(dat[0].run)
 var mess = document.getElementById('mess');
 var message = ""
 if (dat[2].length > 0)
@@ -96,7 +101,7 @@ if (dat[2].length > 0)
 		mess.innerHTML = message + '</br>';
 	}
 var locState = document.getElementById('locState');
-if (dat[1].length == 0){
+if (dat[0].run == 1 && dat[1].length == 0){
 	locState.innerHTML = "Start locating...";
 	setTimeout(function(){ document.getElementById('butRefresh').click() }, 3000);
 }else{
@@ -108,10 +113,10 @@ if (dat[1].length == 0){
 		locState.innerHTML = "Locating running...";
 	if (dat[0].run == 2){
 		locState.innerHTML = "Location stopped.";
-			setTimeout(function(){ document.getElementById('butRefresh').click() }, 2000);
+			//setTimeout(function(){ document.getElementById('butRefresh').click() }, 2000);
     }
 }
-locState.innerHTML += (message == "") ? "":" (ERROR!)"
+//locState.innerHTML += (message == "") ? "":" (ERROR!)"
 var listData = document.getElementById('listData');
 for(var i = dat[1].length - 1; i > -1 ; i--){
 	strClass = 'listitem'
@@ -119,7 +124,7 @@ for(var i = dat[1].length - 1; i > -1 ; i--){
 		strClass += " mess"
 	var liElem = document.createElement("li");
 	liElem.setAttribute('class', strClass);
-	liElem.innerHTML = '<a href="#" class="viewCtl" onclick="showdat(this)">+</a>' + (new Date(dat[1][i].time)).toLocaleString("en-CA") 
+	liElem.innerHTML = '<a href="#" class="viewCtl" onclick="showdat(this)">+</a>' + (i+1) + '- ' + (new Date(dat[1][i].time)).toLocaleString("en-CA") 
 		+ '</br>&#8239;&#8239;Alt.: ' + dat[1][i].altitude + '&#8239;&#8239;Acc.: ' + Math.round(dat[1][i].accuracy) 
 		+ ((dat[1][i].dist) ? '&#8239;&#8239;Dist.: ' + Math.round(dat[1][i].dist) + '</br> ':'</br> ') + dat[1][i].latitude + ', ' + dat[1][i].longitude;
 	listData.appendChild(liElem);
@@ -131,12 +136,13 @@ for(var i = dat[1].length - 1; i > -1 ; i--){
 </head>     
 <body onload="listItems()">
   <div class="divCenter">
-<h1>Golf GPS</h1>
+<h1>Rec. GPS</h1>
 <span id="mess" class="mess"></span>
 <form action="/stop" method="GET">
-    <input id="butStop" type="submit" name="stop" value="Stop location"></br></br></br>
-	<input id="butStart" type="submit" name="start" value="Start options"></br></br>
-	<input id="butRefresh" type="submit" name="refresh" value="Refresh display"></br></br>
+    <input id="butStop" class="but" type="submit" name="stop" value="Stop location"></br>
+	<input id="butView" class="but" type="submit" name="view" value="View locations"></br>
+	<input id="butStart" class="but" type="submit" name="start" value="Start options"></br>
+	<input id="butRefresh" class="but" type="submit" name="refresh" value="Refresh display"></br>
 <div class="divLeft">
 
 <div >
