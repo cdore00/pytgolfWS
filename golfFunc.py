@@ -774,6 +774,7 @@ def updateGame(param, self):
 			put = int(para[4])
 			lost = int(para[5])
 			name = (para[6])
+			bloc = (para[7])
 			if stroke == 0:	#Delete score hole
 				stroke = None
 				put = None
@@ -783,14 +784,15 @@ def updateGame(param, self):
 			Lno = "L" + str(hole)
 			
 			coll = dataBase.score
-			if len(para) > 7:
-				sData = (para[7])
+			if len(para) > 8:
+				sData = (para[8])
 				sData = loads(sData)
 				sField = dict()
 				sField["USER_ID"] = user
 				sField["PARCOURS_ID"] = parc
 				sField["score_date"] = None
 				sField["name"] = name
+				sField["bloc"] = bloc
 				sField[Tno] = stroke
 				sField[Pno] = put
 				sField[Lno] = lost
@@ -806,8 +808,8 @@ def updateGame(param, self):
 						sField[Lno] = None if sH["L"] == None else int(sH["L"])
 					hn+= 1
 				
-				if len(para) > 8:
-					oData = (para[8])
+				if len(para) > 9:
+					oData = (para[9])
 					oData = loads(oData)
 					others = []
 					for oD in oData:
@@ -1056,7 +1058,7 @@ def setPosition(param, self):
 				#print(str(len(para)))
 				hotSpot = int(para[6])
 				doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart}, {'$push': {'locList': {'time': locTime, 'lat': locLat, 'lng': locLng, 'acc': locAcc, 'hot': hotSpot}}},  upsert=True )
-			else:	
+			else:
 				doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart}, {'$push': {'locList': {'time': locTime, 'lat': locLat, 'lng': locLng, 'acc': locAcc}}},  upsert=True )
 			#doc = coll.update( { 'USER_ID': userId, 'startTime': { '$gte': timeStart, '$lte': timeEnd }, {'$push': {'locList': {'time': locTime, 'lat': locLat, 'lng': locLng, 'acc': locAcc}}},  upsert=True )
 			return dumps(doc)
