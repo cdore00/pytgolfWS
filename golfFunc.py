@@ -1054,10 +1054,17 @@ def setPosition(param, self):
 			locLat = float(para[3])
 			locLng = float(para[4])
 			locAcc = int(float(para[5]))
+			print('SAVE...')
 			if (len(para) > 6):
-				#print(str(len(para)))
 				hotSpot = int(para[6])
-				doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart}, {'$push': {'locList': {'time': locTime, 'lat': locLat, 'lng': locLng, 'acc': locAcc, 'hot': hotSpot}}},  upsert=True )
+				print('Para7-' + str(para[6]))
+				if (len(para) > 7 and int(para[7]) != 0):
+					#pdb.set_trace()
+					print('Para8-' + str(para[7]))
+					oldTime = int(para[7])
+					doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart, 'locList.time': oldTime}, {'$set':{'locList.$.time': locTime, 'locList.$.lat': locLat, 'locList.$.lng': locLng, 'locList.$.acc': locAcc, 'locList.$.hot': hotSpot}},  upsert=True )
+				else:
+					doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart}, {'$push': {'locList': {'time': locTime, 'lat': locLat, 'lng': locLng, 'acc': locAcc, 'hot': hotSpot}}},  upsert=True )
 			else:
 				doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart}, {'$push': {'locList': {'time': locTime, 'lat': locLat, 'lng': locLng, 'acc': locAcc}}},  upsert=True )
 			#doc = coll.update( { 'USER_ID': userId, 'startTime': { '$gte': timeStart, '$lte': timeEnd }, {'$push': {'locList': {'time': locTime, 'lat': locLat, 'lng': locLng, 'acc': locAcc}}},  upsert=True )
@@ -1074,6 +1081,7 @@ def getPosition(param, self):
 			para = [x for x in param.split("$")]
 			userId = getID(para[0])
 			timeStart = int(para[1])
+			#pdb.set_trace()
 			timeEnd = timeStart + 86400000	# + 24hre
 
 			coll = dataBase.trajet
@@ -1081,7 +1089,10 @@ def getPosition(param, self):
 			if timeStart == 0:
 				doc = coll.find( { 'USER_ID': userId}).sort("_id",-1).limit(1)
 			else:
-				doc = coll.find( { 'USER_ID': userId, 'startTime': { '$gte': timeStart, '$lt': timeEnd } })
+				if len(para) > 2:
+					doc = coll.find( { 'USER_ID': userId, 'startTime': timeStart })
+				else:
+					doc = coll.find( { 'USER_ID': userId, 'startTime': { '$gte': timeStart, '$lt': timeEnd } })
 				if doc.count() == 0:
 					doc = coll.find( { 'USER_ID': userId, 'startTime': { '$gte': timeStart}}).sort("_id").limit(5)
 			if doc.count() > 0:
