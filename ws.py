@@ -2,6 +2,7 @@ import random
 import string
 import cherrypy
 
+
 import pdb
 #; pdb.set_trace()
 import sys, os, io, time, re, cgi, csv, urllib.parse
@@ -17,14 +18,15 @@ import json
 LOCAL_HOST = 'http://127.0.0.1:3000/'
 HOSTserv = LOCAL_HOST
 HOSTclient = 'http://localhost:8080/'
-HOSTcors = '*'
+HOSTcors = 'https://cdore00.github.io'
+#'*'
 #'https://cdore00.github.io'
 
-global logPass 
+#global logPass 
 logPass = ""
 if os.getenv('PINFO') is not None:
 	logPass = os.environ['PINFO']
-	
+
 if os.getenv('HOST') is not None:
 	HOSTcors = os.environ['HOST']
 	
@@ -291,19 +293,31 @@ class webServer(object):
         return gf.setPosition(param, self)
 
     @cherrypy.expose
+    def delPosition(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.delPosition(param, self)
+
+    @cherrypy.expose
+    def setBallPosition(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.setBallPosition(param, self)
+
+    @cherrypy.expose
     def getPosition(self, info = False):
         param = parse_qs(urlparse('url?' + info).query)
         return gf.getPosition(param, self)
 
-
 # Start server listening request
-def run( port = 8080, domain = '0.0.0.0'):
-   origin = HOSTcors
-   print('HOSTcors=' + HOSTcors)
+def run( args):
+   global HOSTcors
+   port = int(args[0])
+   domain = args[1]
+   print('HOSTcors=' + HOSTcors + ' Domain=' + domain + ' Port=' + str(port))
+
    config = {'server.socket_host': domain,
              'server.socket_port': port,   
              'tools.response_headers.on': True, 
-			 'tools.response_headers.headers': [ ('Access-Control-Allow-Origin', origin)],
+			 'tools.response_headers.headers': [ ('Access-Control-Allow-Origin', HOSTcors), ('Access-Control-Allow-Credentials', 'true')],
 			 'error_page.default': exception_handler,
 			 'engine.autoreload.on' : False,
 			 'log.screen': True,
@@ -316,7 +330,7 @@ def run( port = 8080, domain = '0.0.0.0'):
         gf.localHost = True
    cherrypy.quickstart(webServer())	
 
-        
+
 def build_arg_dict(arg):
 	argd = dict()
 	def add_dict(item):
@@ -335,7 +349,7 @@ def build_arg_dict(arg):
 		add_dict("pass")
 	if "cors" in arg:
 		add_dict("cors")
-		
+	#pdb.set_trace()
 	if (len(arg) / 2) != len(argd):
 		return False
 	else:
@@ -349,24 +363,29 @@ if __name__ == "__main__":
 		del arg[0]
 		param = build_arg_dict(arg)
 		if param:
+			args = []
 			if "cors" in param:
+				#global HOSTcors
 				HOSTcors = param["cors"]
-				print("CORS= " + HOSTcors)
+			if "serv" in param:
+				#global HOSTcors
+				HOSTserv = param["serv"]
 			#print(str(len(argv)))
 			if "pass" in param:
 				#global logPass 
 				logPass = param["pass"]
-				if len(argv) == 3:
-					run()
-				if "domain" in param and "port" in param:
-					run(domain=(param["domain"]), port=int(param["port"]))
-				elif "domain" in param:
-					run(domain=(param["domain"]))
-				elif "port" in param:
-					run(port=int(param["port"]))
+				print("pass= " + logPass)
+			if "port" in param: 
+				args.append(param["port"])
 			else:
-				run()
+				args.append(8080)
+			if "domain" in param: 
+				args.append(param["domain"])
+			else:
+				args.append("0.0.0.0")
+			run(args)
 		else:
-			print("[domain VALUE] [port VALUE] [pass VALUE]")
+			run( [8080,"0.0.0.0"] )
+			print("[cors VALUE] [domain VALUE] [port VALUE] [pass VALUE]")
 	else:
-		run()
+		run([8080,"0.0.0.0"])

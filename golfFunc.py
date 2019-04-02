@@ -38,7 +38,7 @@ def except_handler(fn, e):
 	info = fn + " ERROR: " + str(e)
 	print( info )
 	log_Info( info )
-	#return
+	return dumps({'ok': 0, "message": "ERROR handled" })
 	
 	
 def getID(strID):
@@ -109,7 +109,7 @@ def addUserIdent(param, HOSTclient, HOSTserv, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("addUserIdent", ex)
+		return except_handler("addUserIdent", ex)
 		
 def confInsc(param, HOSTclient, self):
 	""" To Confirm new account"""
@@ -130,7 +130,7 @@ def confInsc(param, HOSTclient, self):
 		else:	
 			return("Confirm" + str(param))		
 	except Exception as ex:
-		except_handler("confInsc", ex)
+		return except_handler("confInsc", ex)
 		
 def getPass(param, self):
 	""" Recover password by email """
@@ -147,7 +147,7 @@ def getPass(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("getPass", ex)
+		return except_handler("getPass", ex)
 
 def getPassForm(self):
 	""" Return HTML code form to change password """
@@ -204,7 +204,7 @@ def authUser(param, self, cookie):
 		else:
 			return dumps({'resp': {"result": 0} })	# No param
 	except Exception as ex:
-		except_handler("authUser", ex)
+		return except_handler("authUser", ex)
 		
 def saveUser(param, self):
 	""" To modify user account info"""
@@ -248,7 +248,7 @@ def saveUser(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("saveUser", ex)	
+		return except_handler("saveUser", ex)	
 
 def getUserInfo(param, self):
 	""" Get user account info by administrator"""
@@ -271,7 +271,7 @@ def getUserInfo(param, self):
 		else: 
 			return ('{"n":0,"ok":0, "message": "S0062"}')	
 	except Exception as ex:
-		except_handler("", ex)
+		return except_handler("", ex)
 		
 def updateUser(param, self):
 	""" To modify user account info by administrator"""
@@ -296,7 +296,7 @@ def updateUser(param, self):
 		else: 
 			return ('{"n":0,"ok":0, "message": "S0062"}')
 	except Exception as ex:
-		except_handler("updateUser", ex)			
+		return except_handler("updateUser", ex)			
 		
 		
 def savePassword(param, self):
@@ -321,7 +321,7 @@ def savePassword(param, self):
 		else: 
 			return ('{"n":0,"ok":0, "message": "S0062"}')
 	except Exception as ex:
-		except_handler("savePassword", ex)				
+		return except_handler("savePassword", ex)				
 
 
 def getRegionList():
@@ -349,7 +349,7 @@ def getParcInfo(param, self):
 		else:
 			return dumps({'ok': 0})	# No param	
 	except Exception as ex:
-		except_handler("getParcInfo", ex)			
+		return except_handler("getParcInfo", ex)			
 	
 def searchResult(param, self):
 
@@ -386,7 +386,7 @@ def searchResult(param, self):
 		return res
 
 	except Exception as ex:
-		except_handler("searchResult", ex)
+		return except_handler("searchResult", ex)
 
 
 def getFav(param, self):
@@ -409,7 +409,7 @@ def getFav(param, self):
 		else:
 			return dumps({'ok': 0})	# No param		
 	except Exception as ex:
-		except_handler("getFav", ex)
+		return except_handler("getFav", ex)
 		
 def updateFav(param, self):
 	""" Add club to user favorite list"""
@@ -436,7 +436,7 @@ def updateFav(param, self):
 		else:
 			return dumps({'ok': 0})	# No param	
 	except Exception as ex:
-		except_handler("updateFav", ex)
+		return except_handler("updateFav", ex)
 		
 			
 def getClubList(param, self):
@@ -473,7 +473,7 @@ def getClubData(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("getClubData", ex)		
+		return except_handler("getClubData", ex)		
 		
 def getClubParc(param, self):
 	""" To get club and his courses info"""
@@ -508,7 +508,7 @@ def getClubParc(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("getClubParc", ex)
+		return except_handler("getClubParc", ex)
 		
 def getBloc(param, self):
 	try:	
@@ -522,7 +522,7 @@ def getBloc(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("getBloc", ex)	
+		return except_handler("getBloc", ex)	
 		
 def getClubParcTrous(param, self):
 	try:
@@ -550,7 +550,7 @@ def getClubParcTrous(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("getClubParcTrous", ex)
+		return except_handler("getClubParcTrous", ex)
 
 def setGolfGPS(param, self):
 	try:
@@ -589,7 +589,7 @@ def setGolfGPS(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("setGolfGPS", ex)
+		return except_handler("setGolfGPS", ex)
 		
 def countUserGame(param, self):
 	try:
@@ -617,7 +617,7 @@ def countUserGame(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("countUserGame", ex)		
+		return except_handler("countUserGame", ex)		
 
 
 def getGameList(param, cpy):
@@ -701,11 +701,8 @@ def getGameList(param, cpy):
 			
 		else:
 			return dumps({'ok': 0})	# No param
-	except:
-		x=y
-	
-		#Exception as ex:
-		#except_handler("getGameList intTele=" + str(intTele), ex)
+	except Exception as ex:
+		return except_handler("getGameList intTele=" + str(intTele), ex)
 		
 def getGameTab(param, self):
 	try:
@@ -732,7 +729,7 @@ def getGameTab(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("getGameTab", ex)		
+		return except_handler("getGameTab", ex)		
 
 def endDelGame(param, self):
 	try:
@@ -760,7 +757,7 @@ def endDelGame(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("endDelGame", ex)
+		return except_handler("endDelGame", ex)
 		
 def updateGame(param, self):
 	try:
@@ -824,7 +821,7 @@ def updateGame(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("updateGame", ex)
+		return except_handler("updateGame", ex)
 		
 def getGolfGPS(param, self, noDump = False):
 	try:
@@ -849,7 +846,7 @@ def getGolfGPS(param, self, noDump = False):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("getGolfGPS", ex)
+		return except_handler("getGolfGPS", ex)
 		
 def getGame(param, self, userID = False, parcID = False):
 	try:
@@ -873,7 +870,7 @@ def getGame(param, self, userID = False, parcID = False):
 		else:
 			return getG(userID, parcID)
 	except Exception as ex:
-		except_handler("getGame", ex)
+		return except_handler("getGame", ex)
 
 def saveClub(param, self):
 	""" Save Club, courses and blocs data """
@@ -1000,7 +997,7 @@ def saveClub(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("saveClub", ex)
+		return except_handler("saveClub", ex)
 
 def getCourseColl(clubID):
 	collP = dataBase.parcours
@@ -1039,7 +1036,7 @@ def delClub(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("delClub", ex)
+		return except_handler("delClub", ex)
 
 def setPosition(param, self):
 	try:
@@ -1054,17 +1051,22 @@ def setPosition(param, self):
 			locLat = float(para[3])
 			locLng = float(para[4])
 			locAcc = int(float(para[5]))
-			print('SAVE...')
+			#print('SAVE...' + str(param))
 			if (len(para) > 6):
 				hotSpot = int(para[6])
-				print('Para7-' + str(para[6]))
-				if (len(para) > 7 and int(para[7]) != 0):
-					#pdb.set_trace()
+				if (len(para) > 7):
+					alt = int(para[7])
 					print('Para8-' + str(para[7]))
-					oldTime = int(para[7])
-					doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart, 'locList.time': oldTime}, {'$set':{'locList.$.time': locTime, 'locList.$.lat': locLat, 'locList.$.lng': locLng, 'locList.$.acc': locAcc, 'locList.$.hot': hotSpot}},  upsert=True )
 				else:
-					doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart}, {'$push': {'locList': {'time': locTime, 'lat': locLat, 'lng': locLng, 'acc': locAcc, 'hot': hotSpot}}},  upsert=True )
+					alt = 0
+				#pdb.set_trace()
+				if (len(para) > 8 and int(para[8]) != 0):
+					#pdb.set_trace()
+					print('Para9-' + str(para[8]))
+					oldTime = int(para[8])
+					doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart, 'locList.time': oldTime}, {'$set':{'locList.$.time': locTime, 'locList.$.lat': locLat, 'locList.$.lng': locLng, 'locList.$.acc': locAcc, 'locList.$.hot': hotSpot, 'locList.$.alt': alt}},  upsert=True )
+				else:
+					doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart}, {'$push': {'locList': {'time': locTime, 'lat': locLat, 'lng': locLng, 'acc': locAcc, 'hot': hotSpot, 'alt': alt}}},  upsert=True )
 			else:
 				doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart}, {'$push': {'locList': {'time': locTime, 'lat': locLat, 'lng': locLng, 'acc': locAcc}}},  upsert=True )
 			#doc = coll.update( { 'USER_ID': userId, 'startTime': { '$gte': timeStart, '$lte': timeEnd }, {'$push': {'locList': {'time': locTime, 'lat': locLat, 'lng': locLng, 'acc': locAcc}}},  upsert=True )
@@ -1072,7 +1074,61 @@ def setPosition(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("setPosition", ex)
+		return except_handler("setPosition", ex)
+
+
+def delPosition(param, self):
+	try:
+		if param.get("data"):
+			param = param["data"][0]
+			para = [x for x in param.split("$")]
+			coll = dataBase.trajet
+			#pdb.set_trace()
+			userId = getID(para[0])
+			timeStart = int(para[1])
+			locTime = int(para[2])
+			
+			#doc = coll.remove({ 'USER_ID': userId, 'startTime': timeStart, 'locList.time': locTime})
+			doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart}, {'$pull': {'locList': {'time': locTime}}} )
+			
+			return dumps(doc)
+		else:
+			return dumps({'ok': 0})	# No param
+	except Exception as ex:
+		return except_handler("delPosition", ex)			
+
+
+def setBallPosition(param, self):
+	try:
+		if param.get("data"):
+			param = param["data"][0]
+			para = [x for x in param.split("$")]
+			userId = getID(para[0])
+			timeStart = int(para[1])
+
+			coll = dataBase.trajet
+			result = 1
+			mess = ""
+			#pdb.set_trace()
+			if timeStart == 0:
+				doc = coll.find({"USER_ID": userId}).sort("startTime",-1).limit(1)
+				if round(time.time() * 1000) - doc[0]["startTime"] < 21600000:  # Moins que 6 heures
+					param = param.replace("$0$", "$" + str(doc[0]["startTime"]) + "$")
+					timeStart = doc[0]["startTime"]
+					res = loads(setPosition({'data': [param]}, self))
+				else:
+					result = 0
+					mess = "No GPS"
+					return dumps({'ok': 0, 'startTime': timeStart, "message": mess })
+			else:
+				res = loads(setPosition({'data': [param]}, self))
+			
+			res["startTime"] = timeStart
+			return dumps(res)
+		else:
+			return dumps({'ok': 0})	# No param
+	except Exception as ex:
+		return except_handler("setBallPosition", ex)
 		
 def getPosition(param, self):
 	try:
@@ -1102,7 +1158,7 @@ def getPosition(param, self):
 		else:
 			return dumps({'ok': 0})	# No param
 	except Exception as ex:
-		except_handler("getPosition", ex)
+		return except_handler("getPosition", ex)
 		
 # Manage logs
 
@@ -1152,7 +1208,7 @@ def showLog(param):
 			cont = cont + line + '</br>'
 		return(str(cont))
 	except Exception as ex:
-		except_handler("showLog", ex)
+		return except_handler("showLog", ex)
 	
 
 # Send mail
