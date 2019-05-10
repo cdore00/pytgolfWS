@@ -26,7 +26,8 @@ LOG_DIR = (os.getcwd() if os.getcwd() != '/' else '') + '/log'
 #pdb.set_trace()
 if not os.path.exists(LOG_DIR):
 	os.makedirs(LOG_DIR)
-LOG_FILE = LOG_DIR + '/' + str(int(millis())) + '.log'
+LOG_FILE = LOG_DIR + '/pytServer.log'
+#LOG_FILE = LOG_DIR + '/' + str(int(millis())) + '.log'
 print("logfile= " + LOG_FILE)
 
 localHost = False
@@ -444,7 +445,7 @@ def getClubList(param, self):
 	if param.get("data"):
 		clubList = param["data"][0]
 		ids = [int(x) for x in clubList.split(",")]
-
+		
 		coll = dataBase.club
 		docs = coll.find({"_id": {"$in": ids }}, {"_id": 1,"nom": 1, "adresse": 1, "municipal": 1, "telephone": 1, "telephone2": 1, "telephone3": 1, "location": 1, "courses.TROUS": 1}).sort("nom")
 		
@@ -1056,13 +1057,13 @@ def setPosition(param, self):
 				hotSpot = int(para[6])
 				if (len(para) > 7):
 					alt = int(para[7])
-					print('Para8-' + str(para[7]))
+					#print('Para8-' + str(para[7]))
 				else:
 					alt = 0
 				#pdb.set_trace()
 				if (len(para) > 8 and int(para[8]) != 0):
 					#pdb.set_trace()
-					print('Para9-' + str(para[8]))
+					#print('Para9-' + str(para[8]))
 					oldTime = int(para[8])
 					doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart, 'locList.time': oldTime}, {'$set':{'locList.$.time': locTime, 'locList.$.lat': locLat, 'locList.$.lng': locLng, 'locList.$.acc': locAcc, 'locList.$.hot': hotSpot, 'locList.$.alt': alt}},  upsert=True )
 				else:
@@ -1165,9 +1166,11 @@ def getPosition(param, self):
 def log_Info(mess):
 	#pdb.set_trace()
 	ip = gethostbyname(gethostname()) 
+	if 'X-Real-Ip' in cherry.request.headers:
+		ip = cherry.request.headers['X-Real-Ip']
 	t = str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 	mess = re.sub(r"<|>", " ", mess)	# Remplace tags < > by space
-	strMess = t + "\t" + ip + "\t" + mess + "\n"
+	strMess = t + " | " + ip + " | " + mess + "\n"
 	with open(LOG_FILE,'a') as f:
 		f.write(strMess)
 
