@@ -68,7 +68,7 @@ def checkSession(self, role = None):
 			doc = coll.find({"_id": uID, "sessID": sID}, ["_id"])
 		else:
 			doc = coll.find({"_id": uID, "sessID": sID, "niveau":{"$in": role }}, ["_id"])
-		print('ID = ' + str(uID) + '  Session = ' + str(sID) + "  Count= " + str(doc.count()))
+		print('ID = ' + str(uID) + '  Session = ' + str(sID) + "  Count= " + str(doc.count()) + ' cookID = ' + str(cookie['userID'].value))
 		if doc.count() > 0:
 			return True
 		else:
