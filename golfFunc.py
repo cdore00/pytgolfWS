@@ -63,6 +63,7 @@ def checkSession(self, role = None):
 		uID = getID(cookie['userID'].value)
 		coll = dataBase.users
 		#print('2-Role = ' + str(role))
+		print('ID = ' + str(uID) + '  Session = ' + str(sID))
 		if role is None:
 			doc = coll.find({"_id": uID, "sessID": sID}, ["_id"])
 		else:
