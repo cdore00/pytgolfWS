@@ -56,14 +56,14 @@ def cursorTOdict(doc):
 def checkSession(self, role = None):
 	""" Session ID check for user"""
 	#pdb.set_trace()
-
+	
 	#print('1-Cookies = ' + str(cookie))
 	if cookie and 'sessID' in cookie and 'userID' in cookie:
 		sID = cookie['sessID'].value
 		uID = getID(cookie['userID'].value)
 		coll = dataBase.users
 		#print('2-Role = ' + str(role))
-		
+		print(cookie)
 		if role is None:
 			doc = coll.find({"_id": uID, "sessID": sID}, ["_id"])
 		else:
