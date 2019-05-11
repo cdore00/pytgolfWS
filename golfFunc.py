@@ -176,7 +176,7 @@ def authUser(param, self, cookie):
 					res = coll.update({"courriel": user}, { "$set": {"sessID": sessID}})
 					cookie['sessID'] = sessID
 					cookie['sessID']['max-age'] = 31536000
-					cookie['userID'] = sessID
+					cookie['userID'] = userID
 					cookie['userID']['max-age'] = 31536000
 					return mess
 					
