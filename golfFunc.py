@@ -1,6 +1,7 @@
-import pdb
+#import pdb
 import sys, os, io, time, re, cgi, csv
 import smtplib
+import phonetics
 from socket import gethostname, gethostbyname
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
@@ -354,9 +355,43 @@ def getParcInfo(param, self):
 	except Exception as ex:
 		return except_handler("getParcInfo", ex)			
 	
+C_WA = "àâäôóéèëêïîçùûüÿÀÂÄÔÉÈËÊÏÎŸÇÙÛÜ"
+C_NA = "aaaooeeeeiicuuuyAAAOEEEEIIYCUUU"	
+def scanName(name):
+	for car in name:
+		if (C_WA.find(car)) > 0:
+			pos = C_WA.find(car)
+			name = name.replace(car, C_NA[pos:pos+1], 1)
+	return name.upper()
+	
 def searchResult(param, self):
 
 	try:
+		def searchString(qNom, qReg, dist, lng, lat, mode = 0):
+			qT = []
+			#pdb.set_trace()
+			if qNom != None:
+				regxN = re.compile(qNom, re.IGNORECASE)
+				regxV = re.compile(qVille, re.IGNORECASE)
+				q1 = {"$or": [ {"nom": {"$regex": regxN } } , {"municipal": {"$regex": regxV} } ]}
+				if mode == 1:
+					q1 = {"nomU": {"$regex": '.*' + scanName(qNom) + '.*'} }
+				if mode == 2:
+					phonetic=phonetics.metaphone(qNom)
+					q1 = {"nomP": {"$regex": '.*' + phonetic + '.*'} } 
+				qT.append(q1)
+			
+			if qReg != None:
+				q2 = {'region': qReg}
+				qT.append(q2)
+
+			if dist != None:
+				q3 = {"location": { "$near" : {"$geometry": { "type": "Point",  "coordinates": [ lng , lat ] }, "$maxDistance": dist }}};
+				qT.append(q3)
+			return { "$and": qT }
+
+		# Begin function
+		qNom, qReg, dist, lng, lat = None, None, None, None, None
 		if param.get("qn"):
 			qNom = param["qn"][0]
 			qVille = param["qv"][0]
@@ -366,28 +401,27 @@ def searchResult(param, self):
 			dist = float(param["qd"][0])
 			lng = float(param["qlt"][0])
 			lat = float(param["qln"][0])
-		qT = []
+
 		col = dataBase.club
 		
-		if 'qNom' in locals():
-			regxN = re.compile(qNom, re.IGNORECASE)
-			regxV = re.compile(qVille, re.IGNORECASE)
-			q1 = {"$or": [ {"nom": {"$regex": regxN } } , {"municipal": {"$regex": regxV} } ]}
-			qT.append(q1)
+		query = searchString(qNom, qReg, dist, lng, lat)
+
+		docs = col.find(query).collation({"locale": "fr","strength": 1}).sort("nom")
+		res={}
+		res["ph"] = False
+		if docs.count() == 0 and qNom != "":
+			query = searchString(qNom, qReg, dist, lng, lat, 1)
+			docs = col.find(query).sort("nom")
+		if docs.count() == 0 and qNom != "":
+			query = searchString(qNom, qReg, dist, lng, lat, 2)
+			docs = col.find(query).collation({"locale": "fr","strength": 1}).sort("nom")
+			res["ph"] = True
 		
-		if 'qReg' in locals():
-			q2 = {'region': qReg}
-			qT.append(q2)
+		res["data"]=docs
 
-		if 'dist' in locals():
-			q3 = {"location": { "$near" : {"$geometry": { "type": "Point",  "coordinates": [ lng , lat ] }, "$maxDistance": dist }}};
-			qT.append(q3)
-			
-		query = { "$and": qT }
-		docs = col.find(query).sort("nom")
-		res = dumps(docs)
-		return res
-
+		#res = dumps(docs)
+		return dumps(res)
+		
 	except Exception as ex:
 		return except_handler("searchResult", ex)
 
@@ -888,7 +922,6 @@ def saveClub(param, self):
 				blocRes = []
 				coll = dataBase.blocs
 				def getBlocID():
-					#pdb.set_trace()
 					docID = coll.find({}).sort("_id",-1).limit(1)
 					return int(docID[0]["_id"] + 1)
 				
@@ -906,7 +939,7 @@ def saveClub(param, self):
 						bloc["_id"] = getID(str(bloc["_id"]))
 						if bloc["_id"] in Bids:
 							Bids.remove(bloc["_id"])
-					print("save id " + str(bloc["_id"]) + "  PARCOURS_ID " + str(bloc["PARCOURS_ID"]))
+					#print("save id " + str(bloc["_id"]) + "  PARCOURS_ID " + str(bloc["PARCOURS_ID"]))
 					doc = coll.update({ '_id': bloc["_id"]}, { '$set': {'PARCOURS_ID': bloc["PARCOURS_ID"], 'Bloc': bloc["Bloc"], 'T1': bloc["T1"], 'T2': bloc["T2"], 'T3': bloc["T3"], 'T4': bloc["T4"], 'T5': bloc["T5"], 'T6': bloc["T6"], 'T7': bloc["T7"], 'T8': bloc["T8"], 'T9': bloc["T9"], 'T10': bloc["T10"], 'T11': bloc["T11"], 'T12': bloc["T12"], 'T13': bloc["T13"], 'T14': bloc["T14"], 'T15': bloc["T15"], 'T16': bloc["T16"], 'T17': bloc["T17"], 'T18': bloc["T18"], 'Aller': bloc["Aller"], 'Retour': bloc["Retour"], 'Total': bloc["Total"], 'Eval': bloc["Eval"], 'Slope': bloc["Slope"] } },  upsert=True )
 
 					res["result"]=doc
@@ -939,7 +972,7 @@ def saveClub(param, self):
 						res["newID"] = parc["_id"]
 						tupC = tupC,(res["oldID"],res["newID"])
 					#removeBloc(parc["_id"])
-					print("save courses " + str(parc["_id"]))
+					#print("save courses " + str(parc["_id"]))
 					doc = coll.update({ '_id': parc["_id"]}, { '$set': {'CLUB_ID': parc["CLUB_ID"], 'POINTS': parc["POINTS"], 'PARCOURS': parc["PARCOURS"], 'DEPUIS': parc["DEPUIS"], 'TROUS': parc["TROUS"], 'NORMALE': parc["NORMALE"], 'VERGES': parc["VERGES"], 'GPS': parc["GPS"] } },  upsert=True )
 					res["result"]=doc
 					res["result"]["_id"] = parc["_id"]
@@ -979,7 +1012,9 @@ def saveClub(param, self):
 				if clubID > 1000000:	# New club
 					clubID = getClubID()
 				
-				doc = coll.update({ '_id': clubID}, { '$set': {'nom': oClub["name"], 'prive': oClub["prive"], 'adresse': oClub["addr"], 'municipal': oClub["ville"], 'codepostal': cp, 'codepostal2': cps, 'url_club': oClub["urlc"], 'url_ville': oClub["urlv"], 'telephone': oClub["tel1"], 'telephone2': oClub["tel2"], 'telephone3': oClub["tel3"], 'email': oClub["email"], 'region': oClub["region"], 'latitude': oClub["lat"], 'longitude': oClub["lng"] } },  upsert=True )
+				nomU = scanName(oClub["name"])
+				nomP = phonetics.metaphone(oClub["name"])
+				doc = coll.update({ '_id': clubID}, { '$set': {'nom': oClub["name"], 'nomU': nomU, 'nomP': nomP, 'prive': oClub["prive"], 'adresse': oClub["addr"], 'municipal': oClub["ville"], 'codepostal': cp, 'codepostal2': cps, 'url_club': oClub["urlc"], 'url_ville': oClub["urlv"], 'telephone': oClub["tel1"], 'telephone2': oClub["tel2"], 'telephone3': oClub["tel3"], 'email': oClub["email"], 'region': oClub["region"], 'latitude': oClub["lat"], 'longitude': oClub["lng"] } },  upsert=True )
 				
 				Pids = getCourseColl(clubID)
 				Bids = getBlocColl(Pids)
@@ -1062,10 +1097,7 @@ def setPosition(param, self):
 					#print('Para8-' + str(para[7]))
 				else:
 					alt = 0
-				#pdb.set_trace()
 				if (len(para) > 8 and int(para[8]) != 0):
-					#pdb.set_trace()
-					#print('Para9-' + str(para[8]))
 					oldTime = int(para[8])
 					doc = coll.update( { 'USER_ID': userId, 'startTime': timeStart, 'locList.time': oldTime}, {'$set':{'locList.$.time': locTime, 'locList.$.lat': locLat, 'locList.$.lng': locLng, 'locList.$.acc': locAcc, 'locList.$.hot': hotSpot, 'locList.$.alt': alt}},  upsert=True )
 				else:
@@ -1140,11 +1172,11 @@ def getPosition(param, self):
 			para = [x for x in param.split("$")]
 			userId = getID(para[0])
 			timeStart = int(para[1])
-			#pdb.set_trace()
+
 			timeEnd = timeStart + 86400000	# + 24hre
 
 			coll = dataBase.trajet
-			#doc = coll.find( { 'USER_ID': userId, 'startTime': timeStart})
+
 			if timeStart == 0:
 				doc = coll.find( { 'USER_ID': userId}).sort("_id",-1).limit(1)
 			else:
