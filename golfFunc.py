@@ -418,7 +418,8 @@ def searchResult(param, self):
 			res["ph"] = True
 		
 		res["data"]=docs
-
+		col = dataBase.regions
+		res["regions"] = col.find({})
 		#res = dumps(docs)
 		return dumps(res)
 		
@@ -1271,7 +1272,7 @@ def sendConfMail(HOSTclient, email, name):
 	# Create the body of the message (a plain-text and an HTML version).
 	text = "Hi %s!\nCliquer ce lien pour confirmer l\'inscription de votre compte:\n%s\n\nGolf du Québec" % (name, HOSTclient)
 	html = """\
-	<html><body><div style="text-align: center;"><div style="background-color: #3A9D23;height: 34px;"><div style="margin: 3px;float:left;"><img alt="Image Golf du Québec" width="25" height="25" src="https://cdore00.github.io/golf/images/golf.png" /></div><div style="font-size: 22px;font-weight: bold;color: #ccf;padding-top: 5px;">Golfs du Qu&eacute;bec</div></div></br><a href="%s" style="font-size: 20px;font-weight: bold;">Cliquer ce lien pour confirmer l\'inscription de votre compte:<p>%s</p> </a></br></br></br><p><div id="copyright">Copyright &copy; 2005-2018</div></p></div></body></html>
+	<html><body><div style="text-align: center;"><div style="background-color: #3A9D23;height: 40px;"><div style="margin: 3px;float:left;"><img alt="Image Golf du Québec" width="25" height="25" src="https://cdore00.github.io/golf/images/golf.png" /></div><div style="font-size: 22px;font-weight: bold;color: #ccf;padding-top: 5px;">Golfs du Qu&eacute;bec</div></div></br><a href="%s" style="font-size: 20px;font-weight: bold;">Cliquer ce lien pour confirmer l\'inscription de votre compte:<p>%s</p> </a></br></br></br><p><div id="copyright">Copyright &copy; 2005-2020</div></p></div></body></html>
 	""" % (HOSTclient, email)
 	send_email(fromuser, recipient, subject, text, html)
 
