@@ -554,18 +554,14 @@ def getRecette(param, self):
 				docs = coll.find({"_id": recetID })
 				ret["user"] = getUserIdent(docs[0]["userID"])
 				ret["rec"]=docs
+				if "hist" in docs[0]:
+					ret["histuser"] = getUserIdent(docs[0]["hist"][ len(docs[0]["hist"])-1 ]['userID'])
 
 			if len(ids) > 1:
 				col = dataBase.categorie
 				docCats = col.find({})
 				ret["cat"]=docCats
-			
-			obj={}
-			for key in docs[0]:
-				if key != "_id" and key != "hist" and key != "dateM":
-					print(key + " = " + str(docs[0][key]))
-					obj[key] = docs[0][key]
-			#pdb.set_trace()
+
 			return dumps(ret)
 		else:
 			return dumps({'ok': 0})	# No param
@@ -591,7 +587,7 @@ def saveRecet(param, self):
 			#if True:
 
 				coll = dataBase.recettes
-				
+				getRecette
 				oIngr = obj["ingr"]
 				oPrep = obj["prep"]
 				
@@ -611,13 +607,13 @@ def saveRecet(param, self):
 					doc = coll.update({ '_id': oID}, { '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, "dateM": actTime, 'userID': Cuser, 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], "state": state, 'imgURL': imgURL, 'ingr': oIngr, 'prep': oPrep } },  upsert=True )
 					#doc = coll.update_one({ '_id': oID}, { '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], 'ingr': oIngr, 'prep': oPrep } },  upsert=True )
 					newDoc = loads(getRecette({'data':[ obj["ID"] ]}, self))['rec'][0]
-					obj={'time': actTime}
+					obj={'time': actTime, 'userID': oldDoc['userID']}
 					for key in newDoc:
 						if key != "_id" and key != "hist" and key != "dateM" and key != "nomU" and key != "nomP":
 							#print(key + " = " + str(docs[0][key]))
 							if newDoc[key] != oldDoc[key]:
 								obj[key] = oldDoc[key]
-					if len(obj) > 1: # If modified add history
+					if len(obj) > 2: # If modified add history
 						#pdb.set_trace()
 						doc = coll.update( { '_id': oID}, {'$push': {'hist': obj  }},  upsert=True )
 					
