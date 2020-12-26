@@ -163,7 +163,6 @@ class webServer(object):
 
     @cherrypy.expose
     def saveRecet(self, info = False):
-        gf.cookie = cherrypy.request.cookie
         param = parse_qs(urlparse('url?' + info).query)
         return gf.saveRecet(param, self)
 
@@ -323,8 +322,25 @@ class webServer(object):
         else:
             param = name
         return gf.showLog(param)		
+
+    @cherrypy.expose
+    def getLogState(self, info = False):
+        return lf.getState()
 		
-		
+    @cherrypy.expose
+    def loadLog(self, info = False):
+        return lf.loadLog()
+	
+    @cherrypy.expose	
+    def getLogs(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return lf.getLogs(param)		
+
+    @cherrypy.expose	
+    def getLocation(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return lf.getLocation(param)
+
 # Start server listening request
 def run( args):
    global HOSTcors

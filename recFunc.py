@@ -167,6 +167,7 @@ def sendRecetMail(param, self):
 			ids = [x for x in data.split("$")]
 			email = (ids[0])
 			recetID = ObjectId(ids[1])
+			url = ids[2]
 			
 			coll = dataBase.recettes
 			docs = coll.find({"_id": recetID})
@@ -176,7 +177,8 @@ def sendRecetMail(param, self):
 				ingLi = ['<li>' + x + '</li>' for x in docs[0]['ingr']]
 				htm = '<b>Ingrédients</b></br><ol>' + ''.join(ingLi) + '</ol>'
 				ingLi = ['<li>' + x + '</li>' for x in docs[0]['prep']]
-				htm += '</br><b>Préparation</b></br><ol>' + ''.join(ingLi) + '</ol>'				
+				htm += '</br><b>Préparation</b></br><ol>' + ''.join(ingLi) + '</ol>'
+				htm += '<p></br></br>' + url + '</p>'
 				sendRecet(email, docs[0]['nom'], htm)
 				return dumps({"code":-1, "message": "S0063"})
 			else:
@@ -475,43 +477,44 @@ def getFav(param, self):
 		if param.get("data"):
 			userID = getID(param["data"][0])
 			coll = dataBase.userFavoris
-			docs = coll.find({"USER_ID": userID}, ["CLUB_ID"])
+			docs = coll.find({"USER_ID": userID}, ["REC_ID"])
 			
-			def getClubNameList(clubList):
-				coll = dataBase.club
-				favDocs = coll.find({"_id":{"$in": clubList }},["_id","nom"]).sort("nom")
+			def getRecNameList(recList):
+				coll = dataBase.recettes
+				favDocs = coll.find({"_id":{"$in": recList }},["_id","nom"]).sort("nom")
 				return dumps(favDocs)
 			
 			ids = []
 			for x in docs:
-				ids.append(x['CLUB_ID'])			
+				ids.append(x['REC_ID'])			
 
-			return getClubNameList(ids)
+			return getRecNameList(ids)
 		else:
 			return dumps({'ok': 0})	# No param		
 	except Exception as ex:
 		return except_handler("getFav", ex)
 		
 def updateFav(param, self):
-	""" Add club to user favorite list"""
+	""" Add recipe to user favorite list"""
 	try:
 		if param.get("data"):
-			clubList = param["data"][0]
-			ids = [x for x in clubList.split("$")]
-			clubID = int(ids[0])
+			recList = param["data"][0]
+			ids = [x for x in recList.split("$")]
+
+			recID = ObjectId(ids[0])
 			userID = getID(ids[1])
 			action = int(ids[2])
 
 			coll = dataBase.userFavoris
 
 			if action == 1:
-				docs = coll.insert_one({"CLUB_ID": clubID , "USER_ID": userID})
+				docs = coll.insert_one({"REC_ID": recID , "USER_ID": userID})
 				if docs.acknowledged:
 					r = {'n': 0, 'ok': 1.0}
 				else:
 					r = {'n': 0, 'ok': 0}
 			else:
-				docs = coll.remove({"CLUB_ID": clubID , "USER_ID": userID})
+				docs = coll.remove({"REC_ID": recID , "USER_ID": userID})
 				r = docs
 			return dumps(r)
 		else:
@@ -541,11 +544,25 @@ def getRecList(param, self):
 		
 def getRecette(param, self):
 	""" To get recette info"""
+	
+	def isFavorite(recetID, userID):
+		#pdb.set_trace()
+		if userID is not None:
+			coll = dataBase.userFavoris
+			favDoc = coll.find({"REC_ID": recetID , "USER_ID": userID}, ["REC_ID"])
+			if favDoc.count() > 0:
+				return True
+			else:
+				return False
+		return False	
+
 	try:
 		if param.get("data"):
-			#pdb.set_trace()
 			recList = param["data"][0]
 			ids = [x for x in recList.split("$")]
+			userID = None
+			if len(ids) > 1:
+				userID = None if (ids[1] == 'null' or ids[1] == '') else ids[1]
 			docs = None
 			ret={}
 			if len(ids) == 1 or ids[1] != "NEW":
@@ -553,6 +570,8 @@ def getRecette(param, self):
 				coll = dataBase.recettes
 				docs = coll.find({"_id": recetID })
 				ret["user"] = getUserIdent(docs[0]["userID"])
+				if  userID != None and len(userID) != 3:
+					ret["isFav"] = isFavorite(recetID, ObjectId(userID))
 				ret["rec"]=docs
 				if "hist" in docs[0]:
 					ret["histuser"] = getUserIdent(docs[0]["hist"][ len(docs[0]["hist"])-1 ]['userID'])
@@ -569,7 +588,7 @@ def getRecette(param, self):
 		return except_handler("getRecette", ex)
 
 def saveRecet(param, self):
-	""" Save Club, courses and blocs data """
+	""" Save Recette data """
 
 	try:
 		if param.get("data"):
@@ -579,7 +598,7 @@ def saveRecet(param, self):
 			imgURL = ""
 			if param.get("imgURL"):
 				imgURL = param['imgURL'][0]
-				print(str(imgURL))
+				#print(str(imgURL))
 			""" Save Recette data """
 			cookie = cherrypy.request.cookie
 
@@ -587,7 +606,7 @@ def saveRecet(param, self):
 			#if True:
 
 				coll = dataBase.recettes
-				getRecette
+				
 				oIngr = obj["ingr"]
 				oPrep = obj["prep"]
 				
@@ -597,23 +616,28 @@ def saveRecet(param, self):
 				state = 1 if obj["state"] else 0
 				actTime = int(time.time() * 1000)
 				
+				editData = ""
+				if param.get("editor"):
+					editData = param['editor'][0]
+
 				if obj["ID"] == "NEW":	# Nouvelle recette
 					oID = ObjectId()
 					#doc = coll.insert({ '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, "dateC": int(time.time() * 1000), "dateM": int(time.time() * 1000), 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], "state": 1, 'ingr': oIngr, 'prep': oPrep } },  {"new":True} )
-					doc = coll.update({ '_id': oID}, { '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, "dateC": actTime, "dateM": actTime, 'userID': Cuser, 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], "state": state, 'imgURL': imgURL, 'ingr': oIngr, 'prep': oPrep } },  upsert=True )
+					doc = coll.update({ '_id': oID}, { '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, "dateC": actTime, "dateM": actTime, 'userID': Cuser, 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], "state": state, 'imgURL': imgURL, 'ingr': oIngr, 'prep': oPrep, 'edit': editData } },  upsert=True )
 				else:
 					oldDoc = loads(getRecette({'data':[ obj["ID"] ]}, self))['rec'][0]
 					oID = ObjectId(obj["ID"])
-					doc = coll.update({ '_id': oID}, { '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, "dateM": actTime, 'userID': Cuser, 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], "state": state, 'imgURL': imgURL, 'ingr': oIngr, 'prep': oPrep } },  upsert=True )
+					doc = coll.update({ '_id': oID}, { '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, "dateM": actTime, 'userID': Cuser, 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], "state": state, 'imgURL': imgURL, 'ingr': oIngr, 'prep': oPrep, 'edit': editData } },  upsert=True )
 					#doc = coll.update_one({ '_id': oID}, { '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], 'ingr': oIngr, 'prep': oPrep } },  upsert=True )
 					newDoc = loads(getRecette({'data':[ obj["ID"] ]}, self))['rec'][0]
 					obj={'time': actTime, 'userID': oldDoc['userID']}
+					
 					for key in newDoc:
 						if key != "_id" and key != "hist" and key != "dateM" and key != "nomU" and key != "nomP":
 							#print(key + " = " + str(docs[0][key]))
 							if newDoc[key] != oldDoc[key]:
 								obj[key] = oldDoc[key]
-					if len(obj) > 2: # If modified add history
+					if len(obj) > 2 and (actTime - oldDoc['dateM'] > 86400000 or oldDoc['userID'] != Cuser): # If modified add history
 						#pdb.set_trace()
 						doc = coll.update( { '_id': oID}, {'$push': {'hist': obj  }},  upsert=True )
 					

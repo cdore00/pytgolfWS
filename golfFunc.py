@@ -420,6 +420,11 @@ def searchResult(param, self):
 		res["data"]=docs
 		col = dataBase.regions
 		res["regions"] = col.find({})
+		#if lat != None:
+		res["posList"] = {}
+		res["posList"]["lat"] = lat
+		res["posList"]["lng"] = lng
+		res["posList"]["dist"] = dist
 		#res = dumps(docs)
 		return dumps(res)
 		
