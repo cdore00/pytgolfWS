@@ -45,21 +45,25 @@ if os.environ.get('MONGODB_USER'):
 	passw = urllib.parse.quote_plus(os.environ['MONGODB_PASSWORD'])
 	domain = urllib.parse.quote_plus(os.environ['MONGODB_SERVICE'])
 	dbase = urllib.parse.quote_plus(os.environ['MONGODB_DATABASE'])
-	uri = "mongodb://%s:%s@%s/%s?authMechanism=SCRAM-SHA-1" % (user, passw, domain, dbase)
+	uri = "mongodb://%s:%s@%s/%s?authSource=admin" % (user, passw, domain, dbase)
+	#uri = "mongodb://%s:%s@%s/%s?authMechanism=SCRAM-SHA-1, authSource=admin" % (user, passw, domain, dbase)
 	DATA_DIR = "/data/"
 	IMG_DIR = DATA_DIR + "lou/photos/"
 	IMG_URL = HOSTclient + "/photos/"
 	if domain == "192.168.10.11":
-		HOSTclient = 'https://cdore.ddns.net/'
-		HOSTserv = 'https://cdore.ddns.net/pyt/'
+		HOSTclient = 'https://loupop.ddns.net/'
+		HOSTserv = 'https://loupop.ddns.net/pyt/'
 	else:
 		HOSTclient = 'https://cdore00.github.io/golf/'
 		HOSTserv = 'https://pytgolf-cd-serv.1d35.starter-us-east-1.openshiftapps.com/'
 		#HOSTclient = 'https://pytgolf-cdore2.a3c1.starter-us-west-1.openshiftapps.com/'
 	print("HOSTclient=" + HOSTclient)
 
+#client = "host=%s, username=%s, password=%s, authSource=%s" % (domain, user, passw, "admin")
+#pdb.set_trace()
 DBclient = MongoClient(uri, port)
 data = DBclient[dbase]
+
 # END MongoDB
 
 """ App functions """
@@ -117,7 +121,7 @@ class webServer(object):
         cookie = cherrypy.response.cookie
         cookie['tcookie'] = 'testcookieValue'
         cookie['tcookie']['max-age'] = 3600 """
-
+        #pdb.set_trace()
         col = gf.dataBase.categorie
         docs = col.find({})
         res = dumps(docs)

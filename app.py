@@ -3,7 +3,7 @@ import string
 import cherrypy
 
 
-#import pdb
+import pdb
 #; pdb.set_trace()
 import sys, os, io, re, cgi, csv, urllib.parse
 from urllib.parse import urlparse, parse_qs
@@ -43,7 +43,8 @@ if os.environ.get('MONGODB_USER'):
 	passw = urllib.parse.quote_plus(os.environ['MONGODB_PASSWORD'])
 	domain = urllib.parse.quote_plus(os.environ['MONGODB_SERVICE'])
 	dbase = urllib.parse.quote_plus(os.environ['MONGODB_DATABASE'])
-	uri = "mongodb://%s:%s@%s/%s?authMechanism=SCRAM-SHA-1" % (user, passw, domain, dbase)
+	uri = "mongodb://%s:%s@%s/%s?authMechanism=SCRAM-SHA-1c" % (user, passw, domain, dbase)
+    #uri = "mongodb://{}:{}@{}:{}/{}?authSource=admin".format(MONGO_USER, MONGO_PASS, MONGO_HOST, MONGO_PORT, MONGO_DB)
 	if domain == "192.168.10.11":
 		HOSTclient = 'https://cdore.ddns.net/'
 		HOSTserv = 'https://cdore.ddns.net/pyt/'
@@ -53,7 +54,7 @@ if os.environ.get('MONGODB_USER'):
 		#HOSTclient = 'https://pytgolf-cdore2.a3c1.starter-us-west-1.openshiftapps.com/'
 	print("HOSTclient=" + HOSTclient)
 
-DBclient = MongoClient(uri, port)
+DBclient = MongoClient(uri, port)   
 data = DBclient[dbase]
 # END MongoDB
 

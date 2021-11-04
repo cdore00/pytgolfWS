@@ -388,6 +388,7 @@ def savePassword(param, self):
 
 
 def getCategorieList():
+	#pdb.set_trace()
 	col = dataBase.categorie
 	docs = col.find({})
 	res = dumps(docs)
