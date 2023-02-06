@@ -7,7 +7,7 @@ from socket import gethostname, gethostbyname
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-MAIL_USER = 'charles.dore@nexio.com'
+MAIL_USER = 'cdore07@gmail.com'
 
 from bson import ObjectId
 from bson.json_util import dumps
@@ -161,7 +161,7 @@ def getPass(param, self):
     except Exception as ex:
         return except_handler("getPass", ex)
 
-'''
+
 def sendRecetMail(param, self):
     """ Send recette by email """
     try:
@@ -173,10 +173,11 @@ def sendRecetMail(param, self):
             url = ids[2]
             
             coll = dataBase.recettes
-            docs = coll.find({"_id": recetID})
+            doc = coll.find({"_id": recetID})
+            docs = list(doc)
             #pdb.set_trace()
             strRecet = ""
-            if docs.count() > 0:
+            if len(docs):
                 ingLi = ['<li>' + x + '</li>' for x in docs[0]['ingr']]
                 htm = '<b>Ingrédients</b></br><ol>' + ''.join(ingLi) + '</ol>'
                 ingLi = ['<li>' + x + '</li>' for x in docs[0]['prep']]
@@ -190,7 +191,7 @@ def sendRecetMail(param, self):
             return dumps({'ok': 0})    # No param
     except Exception as ex:
         return except_handler("sendRecetMail", ex)
-'''
+
 
 def getPassForm(self):
     """ Return HTML code form to change password """
@@ -922,7 +923,7 @@ def send_email(fromuser, recipient, subject, text, html):
     # the HTML message, is best and preferred.
     msg.attach(part1)
     msg.attach(part2)
-
+    #pdb.set_trace()
     mail = smtplib.SMTP('smtp.gmail.com', 587)
     mail.ehlo()
     mail.starttls()
