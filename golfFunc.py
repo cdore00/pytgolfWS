@@ -58,7 +58,7 @@ def checkSession(self, role = None):
     """ Session ID check for user"""
     #pdb.set_trace()
     
-    #print('1-Cookies = ' + str(cookie))
+    print('1-Cookies = ' + str(cookie))
     if cookie and 'sessID' in cookie and 'userID' in cookie:
         sID = cookie['sessID'].value
         uID = getID(cookie['userID'].value)
