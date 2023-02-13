@@ -336,6 +336,17 @@ def getUserIdent(o_id):
         data["imgUser"] = info[0]["imgUser"]
     return data
     
+    
+def getUsersIdent(o_id):
+    """ Get user identity"""
+    coll = dataBase.users
+
+    doc = coll.find({"_id":{"$in": o_id }},["_id","Nom", "courriel", "imgUser"])
+    info = list(doc)
+
+    return info    
+  
+    
 def updateUser(param, self):
     """ To modify user account info by administrator"""
     try:
@@ -359,7 +370,7 @@ def updateUser(param, self):
                 
                 coll = dataBase.users
                 docr = coll.update_one({"_id": o_id}, { "$set": {'Nom': name, 'courriel': user, "niveau": role, "actif": active, "imgUser": imgUser } })
-                return dumps(docr)
+                return dumps(docr.raw_result)
             else:
                 return dumps({'ok': 0})    # No param
         else: 
@@ -583,14 +594,14 @@ def getRecette(param, self):
                 ret["user"] = getUserIdent(docs[0]["userID"])
                 if  userID != None and len(userID) != 3:
                     ret["isFav"] = isFavorite(recetID, ObjectId(userID))
-                ret["rec"]=docs
-                if "hist" in docs[0]:
-                    ret["histuser"] = getUserIdent(docs[0]["hist"][ len(docs[0]["hist"])-1 ]['userID'])
-
-            if len(ids) > 1:
-                col = dataBase.categorie
-                docCats = col.find({})
-                ret["cat"]=docCats
+                rec = cursorTOdict(docs)
+                ret["rec"]= [rec]
+                
+                if "hist" in rec:
+                    Hids = []
+                    for x in rec["hist"]:
+                        Hids.append(x['userID'])
+                    ret["histUser"] = getUsersIdent(Hids)
 
             return dumps(ret)
         else:
@@ -651,8 +662,8 @@ def saveRecet(param, self):
                             #print(key + " = " + str(docs[0][key]))
                             if newDoc[key] != oldDoc[key]:
                                 obj[key] = oldDoc[key]
+                    #pdb.set_trace()
                     if len(obj) > 2 and (actTime - oldDoc['dateM'] > 86400000 or oldDoc['userID'] != Cuser): # If modified add history
-                        #pdb.set_trace()
                         doc = coll.update_one( { '_id': oID}, {'$push': {'hist': obj  }},  upsert=True )
                     
                 return dumps(doc.raw_result)
@@ -760,14 +771,31 @@ def updateUser_to_delete(param, self):
                 
                 coll = dataBase.users
                 docr = coll.update_one({"_id": o_id}, { "$set": {'Nom': name, 'courriel': user, "niveau": role, "actif": active } })
-                return dumps(docr)
+                return dumps(docr.raw_result)
             else:
                 return dumps({'ok': 0})    # No param
         else: 
             return ('{"n":0,"ok":0, "message": "S0062"}')
     except Exception as ex:
         return except_handler("updateUser", ex)        
-        
+  
+def delUser(param, self):
+    try:
+        if param.get("id"):
+            #pdb.set_trace()
+            userID = getID(param["id"][0])
+            coll = dataBase.users
+
+            docs = coll.delete_one({"_id": userID })
+            r = docs.raw_result        
+
+            return dumps(r)
+        else:
+            return dumps({'ok': 0})    # No param        
+    except Exception as ex:
+        return except_handler("getFav", ex)
+
+  
 def listNews(param, self):
     """ Return news list """
     coll = dataBase.news
@@ -884,7 +912,7 @@ def sendRecupPassMail(eMail, name, passw):
     text = ''
     name = name if name != '' else eMail
     html = """\
-    <html><body><div style="text-align: center;"><div style="background-color: #3A9D23;height: 34px;"><div style="margin: 3px;float:left;"><img alt="Image recettes" width="25" height="25" src="https://loupop.ddns.net/misc/favicon.gif" /></div><div style="font-size: 22px;font-weight: bold;color: #ccf;padding-top: 5px;">Recettes</div></div></br><p style="width: 100; text-align: left;">Bonjour %s,</p><p></p><p style="width: 100; text-align: left;">Votre mot de passe est : %s </p><p></p><p><div id="copyright">Copyright &copy; 2020</div></p></div></body></html>
+    <html><body><div style="text-align: center;"><div style="background-color: #3A9D23;height: 34px;"><div style="margin: 3px;float:left;"><img alt="Image recettes" width="25" height="25" src="https://loupop.ddns.net/misc/favicon.gif" /></div><div style="font-size: 22px;font-weight: bold;color: #ccf;padding-top: 5px;">Recettes</div></div></br><p style="width: 100; text-align: left;">Bonjour %s,</p><p></p><p style="width: 100; text-align: left;">Votre mot de passe est : %s </p><p></p><p><div id="copyright">Copyright &copy; 2023</div></p></div></body></html>
     """  % (name, passw)
     fromuser = "Recettes"
     subject = "Recettes - Récupérer mot de passe de " + name 
@@ -901,7 +929,7 @@ def sendConfMail(HOSTclient, email, name):
     # Create the body of the message (a plain-text and an HTML version).
     text = "Hi %s!\nCliquer ce lien pour confirmer l\'inscription de votre compte:\n%s\n\nGolf du Québec" % (name, HOSTclient)
     html = """\
-    <html><body><div style="text-align: center;"><div style="background-color: #3A9D23;height: 40px;"><div style="margin: 3px;float:left;"><img alt="Image Golf du Québec" width="25" height="25" src="https://loupop.ddns.net/misc/favicon.gif" /></div><div style="font-size: 22px;font-weight: bold;color: #ccf;padding-top: 5px;">Recettes</div></div></br><a href="%s" style="font-size: 20px;font-weight: bold;">Cliquer ce lien pour confirmer l\'inscription de votre compte:<p>%s</p> </a></br></br></br><p><div id="copyright">Copyright &copy; 2005-2020</div></p></div></body></html>
+    <html><body><div style="text-align: center;"><div style="background-color: #3A9D23;height: 40px;"><div style="margin: 3px;float:left;"><img alt="Image Golf du Québec" width="25" height="25" src="https://loupop.ddns.net/misc/favicon.gif" /></div><div style="font-size: 22px;font-weight: bold;color: #ccf;padding-top: 5px;">Recettes</div></div></br><a href="%s" style="font-size: 20px;font-weight: bold;">Cliquer ce lien pour confirmer l\'inscription de votre compte:<p>%s</p> </a></br></br></br><p><div id="copyright">Copyright &copy; 2023</div></p></div></body></html>
     """ % (HOSTclient, email)
     send_email(fromuser, recipient, subject, text, html)
 
@@ -911,7 +939,7 @@ def send_email(fromuser, recipient, subject, text, html):
     #pdb.set_trace()
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
-    msg['From'] = fromuser
+    msg['From'] = fromuser + " <" + fromuser + ">"   #fromuser
     msg['To'] = recipient 
 
     # Record the MIME types of both parts - text/plain and text/html.

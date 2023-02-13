@@ -138,6 +138,13 @@ class webServer(object):
         return gf.getPass(param, self)
 
     @cherrypy.expose
+    def confInsc(self, data = False):
+        pos = cherrypy.request.query_string.find('?')
+        info = cherrypy.request.query_string[pos+1:]
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.confInsc(param, HOSTclient, self)
+
+    @cherrypy.expose
     def getFav(self, info = False):
         param = parse_qs(urlparse('url?' + info).query)
         return gf.getFav(param, self)
@@ -172,12 +179,12 @@ class webServer(object):
         param = parse_qs(urlparse('url?' + info).query)
         return gf.delRecet(param, self)
 
-    '''
+
     @cherrypy.expose
     def sendRecetMail(self, info = False):
         param = parse_qs(urlparse('url?' + info).query)
         return gf.sendRecetMail(param, self)    
-    '''
+
 
     @cherrypy.expose
     def addFile(self, upfile, type):
@@ -235,6 +242,16 @@ class webServer(object):
         param = parse_qs(urlparse('url?' + info).query)
         return gf.updateUser(param, self)
 
+    @cherrypy.expose
+    def addUserIdent(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.addUserIdent(param, HOSTclient, HOSTserv, self)
+     
+    @cherrypy.expose
+    def delUser(self, info = False):
+        param = parse_qs(urlparse('url?' + info).query)
+        return gf.delUser(param, self)
+     
     @cherrypy.expose
     def listNews(self, info = False):
         param = parse_qs(urlparse('url?' + info).query)

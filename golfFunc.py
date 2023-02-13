@@ -299,7 +299,7 @@ def updateUser(param, self):
                 
                 coll = dataBase.users
                 docr = coll.update_one({"_id": o_id}, { "$set": {'Nom': name, 'courriel': user, "niveau": role, "actif": active } })
-                return dumps(docr)
+                return dumps(docr.raw_result)
             else:
                 return dumps({'ok': 0})    # No param
         else: 
