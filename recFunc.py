@@ -62,9 +62,11 @@ def getCurrentUser():
 
 def checkSession(self, role = None):
     """ Session ID check for user"""
-    #pdb.set_trace()
+    
     cookie = cherrypy.request.cookie
     print('1-Cookies = ' + str(cookie))
+    if usepdb == 0:
+        pdb.set_trace()
     if cookie and 'sessID' in cookie and 'userID' in cookie:
         sID = cookie['sessID'].value
         uID = getID(cookie['userID'].value)
@@ -211,15 +213,19 @@ def authUser(param, self, cookie):
                 coll = dataBase.users
                 doc = coll.find({"courriel": user, "actif": True}, ["_id","Nom", "courriel", "motpass", "niveau"])
                 userDoc = list(doc)
-                
+                if usepdb == 3:
+                    pdb.set_trace()               
                 def setSessID(mess, userID):
-                    #pdb.set_trace()
+                    if usepdb == 3:
+                        pdb.set_trace()
                     sessID = str(ObjectId())
                     res = coll.update_one({"courriel": user}, { "$set": {"sessID": sessID}})
                     cookie['sessID'] = sessID
                     cookie['sessID']['max-age'] = 31536000
-                    #cookie['userID'] = userID
-                    #cookie['userID']['max-age'] = 31536000
+                    cookie['userID'] = userID
+                    cookie['userID']['max-age'] = 31536000
+                    cookie['userRole'] = userDoc[0]["niveau"]
+                    cookie['userRole']['max-age'] = 31536000
                     return mess
                     
                 if not len(userDoc):
@@ -422,6 +428,8 @@ def scanName(name):
     return name.upper()
     
 def getUserRole():
+    if usepdb == 3:
+        pdb.set_trace()
     cookie = cherrypy.request.cookie
     userRole = ""
     if 'userRole' in  cookie:
@@ -568,7 +576,7 @@ def getRecette(param, self):
     """ To get recette info"""
     
     def isFavorite(recetID, userID):
-        #pdb.set_trace()
+    
         if userID is not None:
             coll = dataBase.userFavoris
             favDoc = coll.find({"REC_ID": recetID , "USER_ID": userID}, ["REC_ID"])
@@ -579,6 +587,8 @@ def getRecette(param, self):
         return False    
 
     try:
+        if usepdb == 0:
+            pdb.set_trace()
         if param.get("data"):
             recList = param["data"][0]
             ids = [x for x in recList.split("$")]
@@ -597,11 +607,17 @@ def getRecette(param, self):
                 rec = cursorTOdict(docs)
                 ret["rec"]= [rec]
                 
+                Hids = []
+                Hids.append(rec['userID'])
                 if "hist" in rec:
-                    Hids = []
                     for x in rec["hist"]:
                         Hids.append(x['userID'])
-                    ret["histUser"] = getUsersIdent(Hids)
+                ret["histUser"] = getUsersIdent(Hids)
+                
+            if len(ids) > 1:
+                col = dataBase.categorie
+                docCats = col.find({})
+                ret["cat"]=docCats
 
             return dumps(ret)
         else:
@@ -615,7 +631,8 @@ def saveRecet(param, self):
     try:
         if param.get("data"):
             
-            #pdb.set_trace()
+            if usepdb == 0:
+                pdb.set_trace()
             obj = loads(param['data'][0])
             imgURL = ""
             if param.get("imgURL"):
@@ -647,23 +664,25 @@ def saveRecet(param, self):
 
                 if obj["ID"] == "NEW":    # Nouvelle recette
                     oID = ObjectId()
-                    #doc = coll.insert({ '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, "dateC": int(time.time() * 1000), "dateM": int(time.time() * 1000), 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], "state": 1, 'ingr': oIngr, 'prep': oPrep } },  {"new":True} )
                     doc = coll.update_one({ '_id': oID}, { '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, "dateC": actTime, "dateM": actTime, 'userID': Cuser, 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], "state": state, 'imgURL': imgURL, 'ingr': oIngr, 'prep': oPrep, 'edit': editData } },  upsert=True )
                 else:
                     oldDoc = loads(getRecette({'data':[ obj["ID"] ]}, self))['rec'][0]
                     oID = ObjectId(obj["ID"])
                     doc = coll.update_one({ '_id': oID}, { '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, "dateM": actTime, 'userID': Cuser, 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], "state": state, 'imgURL': imgURL, 'ingr': oIngr, 'prep': oPrep, 'edit': editData } },  upsert=True )
-                    #doc = coll.update_one({ '_id': oID}, { '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], 'ingr': oIngr, 'prep': oPrep } },  upsert=True )
-                    newDoc = loads(getRecette({'data':[ obj["ID"] ]}, self))['rec'][0]
-                    obj={'time': actTime, 'userID': oldDoc['userID']}
                     
+                    newDoc = loads(getRecette({'data':[ obj["ID"] ]}, self))['rec'][0]
+                    obj={'time': oldDoc['dateM'], 'userID': oldDoc['userID']}
+
                     for key in newDoc:
-                        if key != "_id" and key != "hist" and key != "dateM" and key != "nomU" and key != "nomP":
-                            #print(key + " = " + str(docs[0][key]))
+                        if key != "_id" and key != "hist" and key != "dateM" and key != "userID" and key != "nomU" and key != "nomP":
                             if newDoc[key] != oldDoc[key]:
+                                #print(key + " = " + str(newDoc[key]))
                                 obj[key] = oldDoc[key]
-                    #pdb.set_trace()
-                    if len(obj) > 2 and (actTime - oldDoc['dateM'] > 86400000 or oldDoc['userID'] != Cuser): # If modified add history
+
+                    if usepdb > 0:
+                        pdb.set_trace()
+
+                    if oldDoc['state'] == 1 and len(obj) > 2 and ((actTime - oldDoc['dateM'] > 86400000 or oldDoc['userID'] != Cuser)): # If modified add history
                         doc = coll.update_one( { '_id': oID}, {'$push': {'hist': obj  }},  upsert=True )
                     
                 return dumps(doc.raw_result)

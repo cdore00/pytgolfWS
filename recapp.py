@@ -26,6 +26,7 @@ IMG_DIR = ""
 
 #global logPass 
 logPass = ""
+
 if os.getenv('PINFO') is not None:
     logPass = os.environ['PINFO']
 
@@ -73,6 +74,7 @@ import logFunc as lf
 gf.dataBase = data
 gf.DATA_DIR = DATA_DIR
 gf.cherry = cherrypy
+gf.usepdb = -1
 if (IMG_DIR != "" ):
     gf.IMG_DIR = IMG_DIR
     gf.IMG_URL = IMG_URL
@@ -83,6 +85,7 @@ else:
 lf.dataBase = data
 lf.log_Info = gf.log_Info
 lf.CLOUDpass = None
+
 
 if os.environ.get('CPASS'):
     lf.CLOUDpass = os.environ['CPASS']
@@ -117,7 +120,7 @@ class webServer(object):
         """ cookies = cherrypy.request.cookie        
         cookie = cherrypy.response.cookie
         cookie['tcookie'] = 'testcookieValue'
-        cookie['tcookie']['max-age'] = 3600 """
+        cookie['tcookie']['max-age'] = 3600 """     
         #pdb.set_trace()
         col = gf.dataBase.categorie
         docs = col.find({})
@@ -305,8 +308,8 @@ def run( args):
    global HOSTcors
    port = int(args[0])
    domain = args[1]
-   print('HOSTcors=' + HOSTcors + ' Domain=' + domain + ' Port=' + str(port))
-
+   print('HOSTcors=' + HOSTcors + ' Domain=' + domain + ' Port=' + str(port) + ("  -Debug= " + str(gf.usepdb) if (gf.usepdb >= 0) else "")  )
+        
    config = {'server.socket_host': domain,
              'server.socket_port': port,   
              'tools.response_headers.on': True, 
@@ -344,6 +347,8 @@ def build_arg_dict(arg):
         add_dict("cors")
     if "cpass" in arg:
         add_dict("cpass")
+    if "deb" in arg:
+        add_dict("deb")
     #pdb.set_trace()
     if (len(arg) / 2) != len(argd):
         return False
@@ -357,8 +362,12 @@ if __name__ == "__main__":
         arg = [x for x in argv]
         del arg[0]
         param = build_arg_dict(arg)
+        #print(str(arg))
         if param:
             args = []
+            if "deb" in param:
+                gf.usepdb = int(param["deb"])
+                print(str(gf.usepdb))
             if "cors" in param:
                 #global HOSTcors
                 HOSTcors = param["cors"]
@@ -368,9 +377,7 @@ if __name__ == "__main__":
                 HOSTserv = param["serv"]
             #print(str(len(argv)))
             if "pass" in param:
-                #global logPass 
                 logPass = param["pass"]
-                print("pass= " + logPass)
             if "port" in param: 
                 args.append(param["port"])
             else:
@@ -379,9 +386,12 @@ if __name__ == "__main__":
                 args.append(param["domain"])
             else:
                 args.append("0.0.0.0")
+
             run(args)
         else:
             run( [8080,"0.0.0.0"] )
             print("[cors VALUE] [domain VALUE] [port VALUE] [pass VALUE]")
     else:
         run([8080,"0.0.0.0"])
+        
+        
