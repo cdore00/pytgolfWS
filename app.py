@@ -69,6 +69,7 @@ import golfFunc as gf
 import logFunc as lf
 gf.dataBase = data
 gf.cherry = cherrypy
+gf.usepdb = -1
 lf.dataBase = data
 lf.log_Info = gf.log_Info
 lf.CLOUDpass = None
@@ -346,7 +347,7 @@ def run( args):
    global HOSTcors
    port = int(args[0])
    domain = args[1]
-   print('HOSTcors=' + HOSTcors + ' Domain=' + domain + ' Port=' + str(port))
+   print('HOSTcors=' + HOSTcors + ' Domain=' + domain + ' Port=' + str(port) + ("  -Debug= " + str(gf.usepdb) if (gf.usepdb >= 0) else "") )
 
    config = {'server.socket_host': domain,
              'server.socket_port': port,   
@@ -385,6 +386,8 @@ def build_arg_dict(arg):
         add_dict("cors")
     if "cpass" in arg:
         add_dict("cpass")
+    if "deb" in arg:
+        add_dict("deb")
     #pdb.set_trace()
     if (len(arg) / 2) != len(argd):
         return False
@@ -400,6 +403,9 @@ if __name__ == "__main__":
         param = build_arg_dict(arg)
         if param:
             args = []
+            if "deb" in param:
+                gf.usepdb = int(param["deb"])
+                print(str(gf.usepdb))
             if "cors" in param:
                 #global HOSTcors
                 HOSTcors = param["cors"]

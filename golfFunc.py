@@ -174,7 +174,8 @@ def authUser(param, self, cookie):
                 coll = dataBase.users
                 doc = coll.find({"courriel": user, "actif": True}, ["_id","Nom", "courriel", "motpass", "niveau"])
                 userDoc = list(doc)
-                
+                if usepdb == 3:
+                    pdb.set_trace()                
                 def setSessID(mess, userID):
                     #pdb.set_trace()
                     coll = dataBase.users
@@ -184,6 +185,8 @@ def authUser(param, self, cookie):
                     cookie['sessID']['max-age'] = 31536000
                     cookie['userID'] = userID
                     cookie['userID']['max-age'] = 31536000
+                    cookie['userRole'] = userDoc[0]["niveau"]
+                    cookie['userRole']['max-age'] = 31536000
                     return mess
                     
                 if not len(userDoc):
