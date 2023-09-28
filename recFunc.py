@@ -418,11 +418,11 @@ def getCategorieList():
     return res
     
     
-C_WA = "àâäôóéèëêïîçùûüÿÀÂÄÔÉÈËÊÏÎŸÇÙÛÜ"
-C_NA = "aaaooeeeeiicuuuyAAAOEEEEIIYCUUU"    
+C_WA = "àâäôóéèëêïîçùûüÿÀÂÄÔÉÈËÊÏÎŸÇÙÛÜ()"
+C_NA = "aaaooeeeeiicuuuyAAAOEEEEIIYCUUU  "    
 def scanName(name):
     for car in name:
-        if (C_WA.find(car)) > 0:
+        if (C_WA.find(car)) > -1:
             pos = C_WA.find(car)
             name = name.replace(car, C_NA[pos:pos+1], 1)
     return name.upper()
@@ -439,27 +439,42 @@ def getUserRole():
 def searchResult(param, self):
 
     try:
-        def searchString(qNom, qReg, mode = 0):
+        def concatWord(field, word):
+            req = []
+            for w in word.split():
+                req.append({field: {"$regex": '.*' + w + '.*'} })
+            return {"$and": req }
+            #{"$and": {"$elemMatch": req }}
+        
+        def searchString(qNom, qIngr, qCat, mode = 0):
             qT = []
             #pdb.set_trace()
-
-            if qNom != None:
-                regxN = re.compile(qNom, re.IGNORECASE)
-                regxV = re.compile(qVille, re.IGNORECASE)
-                q1 = {"$or": [ {"nom": {"$regex": regxN } } , {"ingr": {"$regex": regxV} } ]}
-                if mode == 1:
-                    q1 = {"nomU": {"$regex": '.*' + scanName(qNom) + '.*'} }
-                if mode == 2:
-                    phonetic=phonetics.metaphone(qNom)
-                    q1 = {"nomP": {"$regex": '.*' + phonetic + '.*'} } 
-                qT.append(q1)
             
-            if qReg != None:
-                #pdb.set_trace()
-                q2 = {'cat._id': qReg}
+            Fnom, Fingr = 'nom','ingr'
+            if mode == 1:
+                Fnom, Fingr = 'nomU','ingrU'
+                qNom, qIngr = scanName(qNom), scanName(qIngr)
+            if mode == 2:
+                Fnom, Fingr = 'nomP','ingrP'
+                qNom, qIngr = phonetics.metaphone(qNom), phonetics.metaphone(qIngr)
+            #regxN = re.compile(qNom, re.IGNORECASE)
+            #regxI = re.compile(qIngr, re.IGNORECASE)
+            if qNom != '' and qIngr != '':
+                q1 = {"$or": [ concatWord(Fnom, qNom) , concatWord(Fingr, qIngr) ]}
+                #q1 = {"$or": [ {Fnom: {"$regex": regxN } } , {Fingr: {"$regex": regxI} } ]}
+                qT.append(q1)
+            else:
+                if qNom != '':
+                    q1 = concatWord(Fnom, qNom)
+                if qIngr != '':
+                    q1 = concatWord(Fingr, qIngr) 
+                if 'q1' in locals():
+                    qT.append(q1)
+            
+            if qCat != None:
+                q2 = {'cat._id': qCat}
                 qT.append(q2)
 
-            #pdb.set_trace()
             userRole = getUserRole()
             if not (localHost or userRole == 'ADM' or userRole == 'MEA'):
                 qT.append({"state": 1 })
@@ -467,35 +482,35 @@ def searchResult(param, self):
             return { "$and": qT }
 
         # Begin function
-        qNom, qReg = None, None
+        #pdb.set_trace()
+        qNom, qIngr, qCat = '', '', None
         if param.get("qn"):
-            qNom = param["qn"][0]
-            qVille = param["qv"][0]
+            qNom = param["qn"][0]  if (param["qn"][0] != "xxxxx") else ''
+            qIngr = param["qv"][0] if (param["qv"][0] != "xxxxx") else ''
         if param.get("qr"):
-            qReg = int(param["qr"][0])
+            qCat = int(param["qr"][0])
 
         col = dataBase.recettes
-        query = searchString(qNom, qReg)
+        query = searchString(qNom, qIngr, qCat)
         fields = {"_id": 1,"nom": 1, "cat": 1, "temp": 1, "cuis": 1, "port": 1, "state": 1}
         docs = col.find(query, fields).collation({"locale": "fr","strength": 1}).sort("nom")
-
+        print(query)
         li = list(docs)
         res={}
         res["ph"] = False
-        if not len(li) and qNom != "":
-            query = searchString(qNom, qReg, 1)
+        if not len(li) and qNom + qIngr != "":
+            query = searchString(qNom, qIngr, qCat, 1)
             docs = col.find(query, fields).sort("nom")
             li = list(docs)
             if not len(li) and qNom != "":
-                query = searchString(qNom, qReg, 2)
+                query = searchString(qNom, qIngr, qCat, 2)
                 docs = col.find(query, fields).collation({"locale": "fr","strength": 1}).sort("nom")
                 li = list(docs)
-        res["ph"] = True
+                res["ph"] = True
         #pdb.set_trace()
         res["data"]=li
         col = dataBase.regions
         res["regions"] = col.find({})
-        #res = dumps(docs)
         return dumps(res)
         
     except Exception as ex:
@@ -657,6 +672,19 @@ def saveRecet(param, self):
                 Cuser = getCurrentUser()
                 state = 1 if obj["state"] else 0
                 actTime = int(time.time() * 1000)
+
+                Uvals = []  #ingrédients upper case
+                Pvals = []  #ingrédients phonetic
+                for x in oIngr:
+                    Uval = scanName(x)
+                    Uvals.append(Uval)
+                    mots = Uval.split()
+                    Pmots = ''
+                    for m in mots:
+                        if m.isnumeric() == False and len(m) > 2:
+                            Pmots = Pmots + phonetics.metaphone(m) + ' '
+                    Pvals.append(Pmots)
+
                 
                 editData = ""
                 if param.get("editor"):
@@ -668,13 +696,13 @@ def saveRecet(param, self):
                 else:
                     oldDoc = loads(getRecette({'data':[ obj["ID"] ]}, self))['rec'][0]
                     oID = ObjectId(obj["ID"])
-                    doc = coll.update_one({ '_id': oID}, { '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, "dateM": actTime, 'userID': Cuser, 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], "state": state, 'imgURL': imgURL, 'ingr': oIngr, 'prep': oPrep, 'edit': editData } },  upsert=True )
+                    doc = coll.update_one({ '_id': oID}, { '$set': {'nom': obj["nom"], 'nomU': nomU, 'nomP': nomP, "dateM": actTime, 'userID': Cuser, 'temp': obj["temp"], 'port': obj["port"], 'cuis': obj["cuis"], 'cat': obj["cat"], 'url': obj["url"], "state": state, 'imgURL': imgURL, 'ingr': oIngr, 'ingrU': Uvals, 'ingrP': Pvals, 'prep': oPrep, 'edit': editData } },  upsert=True )
                     
                     newDoc = loads(getRecette({'data':[ obj["ID"] ]}, self))['rec'][0]
                     obj={'time': oldDoc['dateM'], 'userID': oldDoc['userID']}
 
                     for key in newDoc:
-                        if key != "_id" and key != "hist" and key != "dateM" and key != "userID" and key != "nomU" and key != "nomP":
+                        if key != "_id" and key != "hist" and key != "dateM" and key != "userID" and key != "nomU" and key != "nomP" and key != 'ingrP' and key != 'ingrU':
                             if newDoc[key] != oldDoc[key]:
                                 #print(key + " = " + str(newDoc[key]))
                                 obj[key] = oldDoc[key]
@@ -726,7 +754,8 @@ def saveImg(param, self):
                         return except_handler("addFile Dropbox", ex)
             
             link = dbx.sharing_create_shared_link(file_to)
-            dl_url = re.sub(r"\?dl\=0", "?raw=1", link.url)
+            dl_url = link.url.replace("dl=0", "raw=1")
+            #dl_url = re.sub(r"\?dl\=0", "?raw=1", link.url)
             #os.remove(upload_file) 
             
             return dl_url
@@ -917,8 +946,19 @@ def showLog(param):
 
 # Send mail
 
+def sendChatCode(eMail, code):
+    """ Send code to confirm email"""
+    text = ''
+    html = """\
+    <html><body><div style="text-align: center;"><div style="background-color: #3A9D23;height: 34px;"><div style="margin: 3px;float:left;"><img alt="Image recettes" width="25" height="25" src="https://loupop.ddns.net/misc/favicon.gif" /></div><div style="font-size: 22px;font-weight: bold;color: #ccf;padding-top: 5px;">Recettes</div></div></br><p style="width: 100; text-align: left;">Bonjour,</p><p></p><p style="width: 100; text-align: left;">Voici votre code de confirmation : %s </p><p></p><p><div id="copyright">Copyright &copy; 2023</div></p></div></body></html>
+    """  % (code)
+    fromuser = "Recettes"
+    subject = "Code de confirmation pour utiliser le chat " 
+    log_Info("Confirmer chat courriel : " + eMail)
+    send_email(fromuser, eMail, subject, text, html)
+
 def sendRecet(eMail, nomRecet, htm):
-    """ Send email to retreive password"""
+    """ Envoie une recette par courriel """
     text = ''
 
     fromuser = "Recettes"

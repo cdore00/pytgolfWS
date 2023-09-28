@@ -375,20 +375,43 @@ def scanName(name):
     
 def searchResult(param, self):
     
-    try:
-        def searchString(qNom, qReg, dist, lng, lat, mode = 0):
+    try:   
+        def concatWord(field, word, cond = 0):
+            req = []
+            if cond == 0:
+                cond = "$or"
+                for wd in word.split():
+                    regxV = re.compile(wd, re.IGNORECASE)
+                    req.append({field: {"$regex": regxV} })
+            else:
+                for w in word.split():
+                    req.append({field: {"$regex": '.*' + w + '.*'} })
+            return {cond: req }
+            
+        def searchString(qNom, qVille, qReg, dist, lng, lat, mode = 0):
             qT = []
             #pdb.set_trace()
-            if qNom != None:
+            Fnom, FVille = 'nom', 'municipal'
+            if mode == 1:
+                Fnom = 'nomU'
+                qNom = scanName(qNom)
+            if mode == 2:
+                Fnom = 'nomP'
+                qNom = phonetics.metaphone(qNom)           
+
+            if qNom != '' and qVille != '':
                 regxN = re.compile(qNom, re.IGNORECASE)
-                regxV = re.compile(qVille, re.IGNORECASE)
-                q1 = {"$or": [ {"nom": {"$regex": regxN } } , {"municipal": {"$regex": regxV} } ]}
-                if mode == 1:
-                    q1 = {"nomU": {"$regex": '.*' + scanName(qNom) + '.*'} }
-                if mode == 2:
-                    phonetic=phonetics.metaphone(qNom)
-                    q1 = {"nomP": {"$regex": '.*' + phonetic + '.*'} } 
+                regxV = re.compile(qVille, re.IGNORECASE)               
+                q1 = {"$or": [ {"nom": {"$regex": regxN } } , {"municipal": {"$regex": regxV} }, concatWord(Fnom, qNom, "$and") , concatWord(FVille, qVille) ]}
+                #q1 = {"$or": [ {Fnom: {"$regex": regxN } } , {FVille: {"$regex": regxI} } ]}
                 qT.append(q1)
+            else:
+                if qNom != '':
+                    q1 = concatWord(Fnom, qNom, "$and")
+                if qVille != '':
+                    q1 = concatWord(FVille, qVille) 
+                if 'q1' in locals():
+                    qT.append(q1)
             
             if qReg != None:
                 q2 = {'region': qReg}
@@ -397,15 +420,16 @@ def searchResult(param, self):
             if dist != None:
                 q3 = {"location": { "$near" : {"$geometry": { "type": "Point",  "coordinates": [ lng , lat ] }, "$maxDistance": dist }}};
                 qT.append(q3)
+            
             return { "$and": qT }
 
         # Begin function
         #print(" BEGIN SEARCH")
         
-        qNom, qReg, dist, lng, lat = None, None, None, None, None
+        qNom, qVille, qReg, dist, lng, lat = '', '', None, None, None, None
         if param.get("qn"):
-            qNom = param["qn"][0]
-            qVille = param["qv"][0]
+            qNom = param["qn"][0]  if (param["qn"][0] != "xxxxx") else ''
+            qVille = param["qv"][0] if (param["qv"][0] != "xxxxx") else ''
         if param.get("qr"):
             qReg = int(param["qr"][0])
         if param.get("qd"):
@@ -415,24 +439,24 @@ def searchResult(param, self):
 
         col = dataBase.club
         
-        query = searchString(qNom, qReg, dist, lng, lat)
+        query = searchString(qNom, qVille, qReg, dist, lng, lat)
         #pdb.set_trace()
         docs = col.find(query).collation({"locale": "fr","strength": 1}).sort("nom")
-        
+        print("MODE = 0 " + str(query))
         li = list(docs)
         res={}
         res["ph"] = False
         if not len(li) and qNom != "":
-            query = searchString(qNom, qReg, dist, lng, lat, 1)
+            query = searchString(qNom, qVille, qReg, dist, lng, lat, 1)
             docs = col.find(query).sort("nom")
-            print("MODE = 1 ")
+            print("MODE = 1 " + str(query))
             li = list(docs)
             if not len(li) and qNom != "":
-                query = searchString(qNom, qReg, dist, lng, lat, 2)
+                query = searchString(qNom, qVille, qReg, dist, lng, lat, 2)
                 docs = col.find(query).collation({"locale": "fr","strength": 1}).sort("nom")
                 li = list(docs)
-                print("MODE = 2 ")
-        res["ph"] = True
+                print("MODE = 2 " + str(query))
+                res["ph"] = True
         res["data"]=li
         col = dataBase.regions
         res["regions"] = col.find({})
@@ -1084,7 +1108,8 @@ def delClub(param, self):
     try:
         if param.get("data"):
             clubID = int(param["data"][0])
-            
+            if usepdb == 3:
+                pdb.set_trace()            
             collC = dataBase.club
             collP = dataBase.parcours
             collB = dataBase.blocs
@@ -1097,7 +1122,7 @@ def delClub(param, self):
             doc = collP.delete_many({"CLUB_ID":clubID})
             doc = collC.delete_many({"_id": clubID })
             
-            return dumps(doc)
+            return dumps(doc.raw_result)
         else:
             return dumps({'ok': 0})    # No param
     except Exception as ex:

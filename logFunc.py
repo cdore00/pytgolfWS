@@ -3,12 +3,15 @@ import pdb
 import os, re, time, datetime, subprocess
 from bson.json_util import dumps
 import requests as req
+import shutil
 
 NGINX_LOG_DIR = "/data/log/"
 #NGINX_LOG_DIR = "C:/Users/cdore/AppData/Local/Programs/Python/Python36-32/code/file/"
+#NGINX_LOG_DIR = "C:/Users/charl/AppData/Local/Programs/Python/Python39/code/file/"
 fileName = "golf.access.log"
 actFile = NGINX_LOG_DIR + fileName
 archFile = NGINX_LOG_DIR + fileName + ".dat"    
+logErr = NGINX_LOG_DIR + "logerr.txt"
 
 def except_handler(fn, e):
     """ EXCEPTION """
@@ -36,14 +39,16 @@ def getState():
 
     isAct = os.path.exists(actFile)
     isArch = os.path.exists(archFile)
+    errMess = "."
     #pdb.set_trace()
+    #print( '*****  getState *****' )
     dt2 = 0
     if isArch:
         dt2=os.path.getmtime(archFile)
         last = time.strftime('%Y-%m-%d %H:%M',  time.gmtime(dt2)) + "   "
         #'2019-03-29 15:36   13.1 Ko'
     else:
-        last = "Unknow   "
+        last = "Aucun   "
         
     if isAct:
         size = str(round(os.path.getsize(actFile)/1000,1)) + " Ko"
@@ -56,7 +61,13 @@ def getState():
     else:
         day = ""
 
-    return dumps({'last': dt2, 'mess': last + day + size + " to load."})
+    if os.path.exists(logErr):
+        lines = [line.rstrip('\n') for line in open(logErr)]
+        nbr = len(lines)
+        if nbr > 0:
+            errMess = " *** " + str(int(nbr /2)) + " erreurs dans " + logErr + " ***"
+
+    return dumps({'last': dt2, 'mess': last + day + size + " à charger" + errMess})
 
     
 def getLogs(param):
@@ -154,7 +165,13 @@ def loadLog():
             #pdb.set_trace()
             while True:
                 try:
-                    os.rename(actFile, archFile)
+                    shutil.copy(actFile, archFile)
+                    f = open(actFile, 'w')
+                    f.close()
+                    
+                    #os.rename(actFile, archFile)
+                    #with open(actFile, 'w') as f:
+                    #    f.write('')
                     res = (loadFile())
                     break
                 except OSError as e:
@@ -166,19 +183,19 @@ def loadLog():
                     time.sleep(1)
                     
             if (isSuccess):
-                print("CLOUDpass=" + CLOUDpass)
-                result = subCall(CLOUDpass)
+                #print("CLOUDpass=" + CLOUDpass)
+                #result = subCall(CLOUDpass)
                 #pdb.set_trace()
-                return result
+                return {"ok": isSuccess}
         else:         
             isSuccess = 0
-            res = {"ok": isSuccess , "mess": "No file to load"}    
+            res = {"ok": isSuccess , "mess": "Aucun fichier à charger"}    
 
     return dumps(res)
 
     
 def loadFile():
-
+    #pdb.set_trace()
     lines = [line.rstrip('\n') for line in open(archFile)]
     cnt = 1
     cnt50 = 0
@@ -186,10 +203,10 @@ def loadFile():
     for line in lines:
 
         try:
-            fields = [x.strip() for x in line.split("|")]
+            fields = [x.strip() for x in line.split("|!")]
             date, status, ip, request, user_agent, referer = fields
             #print(request)
-            if len(referer) > 5:
+            if len(fields) > 5:
                 status_code = int(status)
                 sd = date
                 para = [x for x in date.split(" ")]
@@ -205,6 +222,15 @@ def loadFile():
             # Not good, print it!
             print("WARNING: parsing log failed", e)
             print(line)
+            #pdb.set_trace()
+            f = None
+            if not os.path.exists(logErr):
+                f = open(logErr, 'w')
+            else:
+                f = open(logErr, 'a')
+            f.write("WARNING: parsing log failed: " + str(e) + '\n')
+            f.write(line + '\n')
+            f.close()
             continue
         #if not harmless(status_code, ip, request, user_agent):
             #print(line)
@@ -217,7 +243,7 @@ def loadFile():
     if cnt > 1:
         insertLogList(arrList)
     #print(str(cnt))
-    return ({'ok': 1, 'mess': str(( cnt50*50)+cnt) + " loaded."})
+    return ({'ok': 1, 'mess': str(( cnt50*50)+cnt) + " chargé."})
 
 def harmless(status_code, ip, request, user_agent):
      # ... some checks using ip and user agent ...
@@ -238,7 +264,7 @@ def insertLogList(listLog):
         if listLog:
             #print(str(listLog))
             coll = dataBase.log
-            doc = coll.insert(listLog)
+            doc = coll.insert_many(listLog)
             #print(str(doc))
         else:    
             return("No param")        

@@ -43,12 +43,10 @@ if os.environ.get('MONGODB_USER'):
     user = urllib.parse.quote_plus(os.environ['MONGODB_USER'])
     passw = urllib.parse.quote_plus(os.environ['MONGODB_PASSWORD'])
     domain = urllib.parse.quote_plus(os.environ['MONGODB_SERVICE'])
-    dbase = urllib.parse.quote_plus(os.environ['MONGODB_DATABASE'])
-    uri = "mongodb://%s:%s@%s/%s?authMechanism=SCRAM-SHA-1" % (user, passw, domain, dbase)
+    #dbase = urllib.parse.quote_plus(os.environ['MONGODB_DATABASE'])
+    uri = "mongodb://%s:%s@%s/%s?authMechanism=SCRAM-SHA-1" % (user, passw, domain, "admin")
     #uri = "mongodb://%s:%s@%s/%s?ssl=true&ssl_cert_reqs=CERT_NONE&retryWrites=true&w=majority" % (user, passw, domain, dbase)
-    
-    #uri = "mongodb://%s:%s@%s/%s?authMechanism=SCRAM-SHA-1c" % (user, passw, domain, dbase)
-    #uri = "mongodb://{}:{}@{}:{}/{}?authSource=admin".format(MONGO_USER, MONGO_PASS, MONGO_HOST, MONGO_PORT, MONGO_DB)
+
     if domain == "192.168.10.11":
         HOSTclient = 'https://cdore.ddns.net/'
         HOSTserv = 'https://cdore.ddns.net/pyt/'

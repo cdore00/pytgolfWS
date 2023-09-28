@@ -17,7 +17,7 @@ import pdb
 import sys, os, io, re, cgi, csv, urllib.parse
 from urllib.parse import urlparse, parse_qs
 from sys import argv
-#from datetime import datetime  , time
+
 # JSON
 from bson import ObjectId
 from bson.json_util import dumps
@@ -29,8 +29,8 @@ from os.path import abspath  # For upload
 LOCAL_HOST = 'http://127.0.0.1:3000/'
 HOSTserv = LOCAL_HOST
 HOSTclient = 'http://localhost:8080/'
-#HOSTcors = 'https://cdore00.github.io'
-HOSTcors = 'http://cdore.servehttp.com'
+HOSTcors = 'https://cdore00.github.io'
+#HOSTcors = 'http://cdore.servehttp.com'
 DATA_DIR = ""
 IMG_DIR = ""
 
@@ -55,8 +55,8 @@ if os.environ.get('MONGODB_USER'):
     user = urllib.parse.quote_plus(os.environ['MONGODB_USER'])
     passw = urllib.parse.quote_plus(os.environ['MONGODB_PASSWORD'])
     domain = urllib.parse.quote_plus(os.environ['MONGODB_SERVICE'])
-    dbase = urllib.parse.quote_plus(os.environ['MONGODB_DATABASE'])
-    uri = "mongodb://%s:%s@%s/%s?authSource=admin" % (user, passw, domain, dbase)
+    #dbase = urllib.parse.quote_plus(os.environ['MONGODB_DATABASE'])
+    uri = "mongodb://%s:%s@%s/%s?authSource=admin" % (user, passw, domain, "admin")
     #uri = "mongodb://%s:%s@%s/%s?authMechanism=SCRAM-SHA-1, authSource=admin" % (user, passw, domain, dbase)
     DATA_DIR = "/data/"
     IMG_DIR = DATA_DIR + "lou/photos/"
@@ -71,7 +71,6 @@ if os.environ.get('MONGODB_USER'):
     IMG_URL = HOSTclient + "/photos/"
     print("HOSTclient=" + HOSTclient + " IMG_URL=" + IMG_URL)
 
-#client = "host=%s, username=%s, password=%s, authSource=%s" % (domain, user, passw, "admin")
 #pdb.set_trace()
 DBclient = MongoClient(uri, port)
 data = DBclient[dbase]
@@ -81,6 +80,9 @@ data = DBclient[dbase]
 """ App functions """
 import recFunc as gf
 import logFunc as lf
+import chatFunc as cf
+cf.dataBase = data
+cf.sendChatCode = gf.sendChatCode
 gf.dataBase = data
 gf.DATA_DIR = DATA_DIR
 gf.cherry = cherrypy
@@ -112,6 +114,7 @@ def exception_handler(status, message, traceback, version):
     return logInfo
 
 lf.except_handler = gf.except_handler
+cf.except_handler = gf.except_handler
 
 def millis():
     """ returns the elapsed milliseconds (1970/1/1) since now """
@@ -119,42 +122,6 @@ def millis():
     epoch = time.asctime(obj)
     return round(time.time()*1000)
 
-def addMessage(data):
-    coll = gf.dataBase.chat
-    res = coll.insert_one({'cID': data['cID'], 'time': data['time'], 'status': data['stat'], 'IP': data['IP'], 'user': data['user'], 'data': data['data'], 'messR': data['messR']})
-    
-    return {"Ok": res.acknowledged  , "oID": res.inserted_id}
-
-def reaMessage(data):
-    #pdb.set_trace()
-    coll = gf.dataBase.chat
-    res = coll.update_one({'cID': data['cID'], 'time': data['mID']}, { "$set": { 'IP': data['IP'], 'user': data['user'], 'Mtime': data['time'], 'status': data['stat'] } } )
-    result = int(res.raw_result["ok"])
-    Rdata = res.raw_result
-    if result == 1:
-        docs = coll.find({'cID': data['cID'], 'time': data['mID']}) 
-        Rdata = dict(loads(dumps(docs))[0])
-        Rdata["ok"] = result
-    
-    return dumps(Rdata)
-
-def delMessage(data):
-    
-    coll = gf.dataBase.chat
-    res = coll.update_one({'cID': data['cID'], 'time': data['mID']}, { "$set": { 'IP': data['IP'], 'user': data['user'], 'Mtime': data['time'], 'status': data['stat'] } } )
-    Rdata = res.raw_result
-    Rdata["status"] = data['stat']
-    #pdb.set_trace()
-    return dumps(Rdata)
-
-def get_new_messages(id, lastTime):
-    # query the database since the last_message_time, return the new messages
-    
-    coll = gf.dataBase.chat
-    docs = coll.find({'cID': id, 'time': { '$gt': lastTime }}) 
-
-    return docs
-    
     
 class webServer(object):
     """ Serve Recettes functions """
@@ -167,92 +134,34 @@ class webServer(object):
         randId = ''.join(random.sample(string.hexdigits, 8))
         return 'Call ID: ' + randId
 
+    # Chat functions
+    @cherrypy.expose
+    def confirmMail(self, info = False):
+        data = json.loads(info)
+        return cf.sendConfirmMail(self, data)
+
+    @cherrypy.expose
+    def confirmCode(self, info = False):
+        data = json.loads(info)
+        return cf.validChatUserCode(data)
+
     @cherrypy.expose
     #@cherrypy.tools.json_in()
     #@cherrypy.tools.json_out()
     def updChat(self, info = False):
-        #pdb.set_trace()
         data = json.loads(info)
-        data['time'] = int(millis())
-        data['IP'] = gethostbyname(gethostname()) 
-        if data["stat"] == "D":
-            res = delMessage(data)  # Supprimer message
-        if data["stat"] == "A":
-            res = reaMessage(data)  # Réafficher message 
-        if data["stat"] == "M" or data["stat"] == "R":
-            res = addMessage(data)  # gérer res
-            data["ok"] = res["Ok"]
-            #pdb.set_trace()
-            res = dumps(data)
-        print(res)             #PRINT
-        return res
+        return cf.updChat(self, data)
 
     @cherrypy.expose
     def chat(self, lastTime, cID, uID, coID, rN):
-        #pdb.set_trace()
-        lastTime = int(lastTime)
-        cID = int(cID)
-        rN  = int(rN)
-        result = {}
-        sleepInterv = 2
-        maxPollTime = 20
-        pollTime = 0
-        
-        uID = uID if uID != '' else ("T" + str(int(1000000 / random())))    # Si l'utilisateur l'a pas d'indentitiant, on en crée un 
-        if uID not in userOnPage:
-            userOnPage.append(uID)                                          # On ajoute l'utilisateur à la liste sur la page
-        result["uID"] = uID
-        
-        if coID != '' and coID not in connectUser:
-            connectUser.append(coID)
-        
-        messages = []
-
-        # wait for new messages to arrive
-        if rN > 0:
-            messages = list(get_new_messages(cID, lastTime))
-        else:
-            while len(messages) == 0:
-                time.sleep(sleepInterv)
-                if pollTime == 2 or pollTime == 10:
-                    #pdb.set_trace()
-                    ts = lastTime / 1000
-                    print( uID + " Connect: " + coID + "  Time:" + str(datetime.fromtimestamp(time.time()).strftime(' %HH%M:%S')) + "  Last:" + str(datetime.fromtimestamp(lastTime/1000).strftime(' %HH%M:%S')))
-               
-                messages = list(get_new_messages(cID, lastTime))
-                pollTime += sleepInterv
-                if pollTime > maxPollTime:
-                    break
-
-        print(str(connectUser) + " connecté  Tot: " + str(len(connectUser)))
-        print(str(userOnPage) + "   Tot: " + str(len(userOnPage)))            
-        pollTime = 0
-        result["uNbr"] = len(userOnPage)
-        if uID in userOnPage:
-            userOnPage.remove(uID)              # On supprime l'utilisateur, au cas où il n'est plus en ligne
-        result["cNbr"] = len(connectUser)
-        if coID != '' and coID in connectUser:
-            connectUser.remove(coID)            # On supprime l'utilisateur, au cas où il n'est plus en ligne
-        result["mess"] = messages
-
-        print("Time:" + str(datetime.fromtimestamp(time.time()).strftime(' %HH%M:%S')) + "  Last:" + str(datetime.fromtimestamp(lastTime/1000).strftime(' %HH%M:%S')) + "   Messages : " + str(len(messages)))
-        return dumps(result)
+        return cf.chat(self, lastTime, cID, uID, coID, rN)
 
 
     @cherrypy.expose
     def fetchHisto(self, lastTime, cID):
-        limitCnt = 20
-        #pdb.set_trace()))
-        coll = gf.dataBase.chat
+        return cf.fetchHisto(self, lastTime, cID)
 
-        lastTime = int(lastTime)
-        cID  = int(cID)
-        
-        docs = coll.find({'cID': cID , 'time': {'$gte':lastTime}})
-        cnt = len(list(docs))
-        histdocs = coll.find({'cID': cID}).sort("time",-1).skip(cnt).limit(limitCnt)
-        print("Time:" + str(lastTime) + "  cID:" + str(cID) + "  SKIP : " +  str(cnt))
-        return dumps(histdocs)
+    #FIN Chat functions
     
     @cherrypy.expose
     def getCat(self, info = False):
@@ -444,11 +353,11 @@ class webServer(object):
 
 # Start server listening request
 def run( args):
-   global HOSTcors
+   #global HOSTcors
    port = int(args[0])
    domain = args[1]
    print('HOSTcors=' + HOSTcors + ' Domain=' + domain + ' Port=' + str(port) + ("  -Debug= " + str(gf.usepdb) if (gf.usepdb >= 0) else "")  )
-        
+   #pdb.set_trace()     
    config = {'server.socket_host': domain,
              'server.socket_port': port,   
              'tools.response_headers.on': True, 
