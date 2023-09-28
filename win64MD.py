@@ -837,7 +837,7 @@ class dbaseObj():
         self.dbase = ""
         self.server = {
             "Local": "mongodb://localhost:27017",
-            "Vultr": "mongodb://CDadmin:925045Cd!@45.32.223.176:6600/?authSource=admin&ssl=false"
+            "Vultr": "mongodb://admin:999@455.324.223.176:8700/?authSource=admin&ssl=false"
             }
 
     def connectTo(self, Server = "Local", dbName = "resto"):
